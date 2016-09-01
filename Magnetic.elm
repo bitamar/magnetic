@@ -1,5 +1,6 @@
 module Main exposing (..)
 
+import Dict exposing (..)
 import Html exposing (..)
 import Html.App as App
 import Html.Attributes exposing (..)
@@ -23,11 +24,12 @@ main =
 
 
 type alias Model =
-    List Magnet
+    Dict Int Magnet
 
 
 type alias Magnet =
-    { word : String
+    { id : Int
+    , word : String
     , position : Position
     , drag : Maybe Drag
     }
@@ -41,9 +43,10 @@ type alias Drag =
 
 init : ( Model, Cmd Msg )
 init =
-    ( [ Magnet "nothing" (Position 200 200) Nothing
-      , Magnet "just" (Position 300 300) Nothing
-      ]
+    ( Dict.fromList
+        [ ( 1, Magnet 1 "nothing" (Position 200 200) Nothing )
+        , ( 2, Magnet 2 "just" (Position 300 300) Nothing )
+        ]
     , Cmd.none
     )
 
@@ -60,20 +63,32 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( [ (updateHelp msg) ], Cmd.none )
+    let
+        magnet' =
+            updateHelp msg
+
+        model' =
+            let
+                update' : Maybe Magnet -> Maybe Magnet
+                update' magnet =
+                    Just magnet'
+            in
+                Dict.update magnet'.id update' model
+    in
+        ( model', Cmd.none )
 
 
 updateHelp : Msg -> Magnet
 updateHelp msg =
     case msg of
-        DragStart ({ word, position, drag } as magnet) xy ->
-            Magnet word position (Just (Drag xy xy))
+        DragStart ({ id, word, position, drag } as magnet) xy ->
+            Magnet id word position (Just (Drag xy xy))
 
-        DragAt ({ word, position, drag } as magnet) xy ->
-            Magnet word position (Maybe.map (\{ start } -> Drag start xy) drag)
+        DragAt ({ id, word, position, drag } as magnet) xy ->
+            Magnet id word position (Maybe.map (\{ start } -> Drag start xy) drag)
 
-        DragEnd ({ word, position, drag } as magnet) _ ->
-            Magnet word (getPosition magnet) Nothing
+        DragEnd ({ id, word, position, drag } as magnet) _ ->
+            Magnet id word (getPosition magnet) Nothing
 
 
 
@@ -91,7 +106,7 @@ subscriptions model =
                 Just _ ->
                     [ Mouse.moves <| DragAt magnet, Mouse.ups <| DragEnd magnet ]
     in
-        Sub.batch <| List.concatMap handleMagnet model
+        Sub.batch <| List.concatMap handleMagnet <| values model
 
 
 
@@ -102,7 +117,7 @@ view : Model -> Html Msg
 view model =
     div []
         [ pre [] [ text <| toString model ]
-        , div [] <| List.map printMagnet model
+        , div [] <| List.map printMagnet <| values model
         ]
 
 
