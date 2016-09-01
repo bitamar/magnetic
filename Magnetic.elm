@@ -53,35 +53,26 @@ init =
 
 
 type Msg
-    = DragStart Position
-    | DragAt Position
-    | DragEnd Position
+    = DragStart Magnet Position
+    | DragAt Magnet Position
+    | DragEnd Magnet Position
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case List.head model of
-        Just magnet ->
-            ( [ updateHelp msg magnet ], Cmd.none )
-
-        Nothing ->
-            ( [], Cmd.none )
+    ( [ (updateHelp msg) ], Cmd.none )
 
 
-updateHelp : Msg -> Magnet -> Magnet
-updateHelp msg ({ word, position, drag } as magnet) =
+updateHelp : Msg -> Magnet
+updateHelp msg =
     case msg of
-        DragStart xy ->
-            let
-                _ =
-                    Debug.log <| toString xy
-            in
-                Magnet word position (Just (Drag xy xy))
+        DragStart ({ word, position, drag } as magnet) xy ->
+            Magnet word position (Just (Drag xy xy))
 
-        DragAt xy ->
+        DragAt ({ word, position, drag } as magnet) xy ->
             Magnet word position (Maybe.map (\{ start } -> Drag start xy) drag)
 
-        DragEnd _ ->
+        DragEnd ({ word, position, drag } as magnet) _ ->
             Magnet word (getPosition magnet) Nothing
 
 
@@ -91,17 +82,16 @@ updateHelp msg ({ word, position, drag } as magnet) =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    case List.head model of
-        Just magnet ->
+    let
+        handleMagnet magnet =
             case magnet.drag of
                 Nothing ->
-                    Sub.none
+                    []
 
                 Just _ ->
-                    Sub.batch [ Mouse.moves DragAt, Mouse.ups DragEnd ]
-
-        Nothing ->
-            Sub.none
+                    [ Mouse.moves <| DragAt magnet, Mouse.ups <| DragEnd magnet ]
+    in
+        Sub.batch <| List.concatMap handleMagnet model
 
 
 
@@ -111,14 +101,9 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div []
-        [ div [] [ text <| toString model ]
-        , div [] <|
-            List.map printMagnet model
+        [ pre [] [ text <| toString model ]
+        , div [] <| List.map printMagnet model
         ]
-
-
-
---
 
 
 printMagnet : Magnet -> Html Msg
@@ -132,7 +117,7 @@ printMagnet magnet =
             toString number ++ "px"
     in
         div
-            [ on "mousedown" (Json.map DragStart Mouse.position)
+            [ on "mousedown" (Json.map (DragStart magnet) Mouse.position)
             , style
                 [ ( "background-color", "#3C8D2F" )
                 , ( "cursor", "move" )
