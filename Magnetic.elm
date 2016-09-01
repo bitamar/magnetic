@@ -65,21 +65,17 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         magnet' =
-            updateHelp msg
+            updateMagnet msg
 
+        {- | Replace the updated magnet on the magnets dictionary. -}
         model' =
-            let
-                update' : Maybe Magnet -> Maybe Magnet
-                update' magnet =
-                    Just magnet'
-            in
-                Dict.update magnet'.id update' model
+            Dict.update magnet'.id (\_ -> Just magnet') model
     in
         ( model', Cmd.none )
 
 
-updateHelp : Msg -> Magnet
-updateHelp msg =
+updateMagnet : Msg -> Magnet
+updateMagnet msg =
     case msg of
         DragStart ({ id, word, position, drag } as magnet) xy ->
             Magnet id word position (Just (Drag xy xy))
