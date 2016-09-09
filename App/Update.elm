@@ -1,24 +1,35 @@
 module App.Update exposing (init, subscriptions, update, Msg(..))
 
 import App.Model exposing (..)
+import Http.Update exposing (init, Msg)
 import Magnets.Update exposing (Msg)
 import Mouse exposing (moves, Position)
 
 
 type Msg
-    = Magnets Magnets.Update.Msg
+    = Http Http.Update.Msg
+    | Magnets Magnets.Update.Msg
     | MouseMove Mouse.Position
     | MouseUp Mouse.Position
 
 
 init : ( Model, Cmd Msg )
 init =
-    emptyModel ! []
+    ( emptyModel, Cmd.map Http Http.Update.init )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        Http msg ->
+            let
+                ( magnets', cmds ) =
+                    Http.Update.update msg model.magnets
+            in
+                ( { model | magnets = magnets' }
+                , Cmd.map Http cmds
+                )
+
         Magnets msg ->
             let
                 ( magnets', cmds ) =

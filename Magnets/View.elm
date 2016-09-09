@@ -16,6 +16,7 @@ view : Magnets.Model.Model -> Html Msg
 view model =
     div []
         [ div [] <| List.map printMagnet <| Dict.values model
+          -- , div [] [ text <| toString model ]
         ]
 
 

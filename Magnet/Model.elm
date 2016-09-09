@@ -4,7 +4,7 @@ import Mouse exposing (Position)
 
 
 type alias Magnet =
-    { id : Int
+    { id : String
     , word : String
     , position : Position
     , drag : Maybe Drag
