@@ -9030,14 +9030,16 @@ var _evancz$elm_http$Http$post = F3(
 			decoder,
 			A2(_evancz$elm_http$Http$send, _evancz$elm_http$Http$defaultSettings, request));
 	});
-var _user$project$Magnet_Model$Magnet = F4(
+var _user$project$Magnet_Model$Magnet = F5(
+	function (a, b, c, d, e) {
+		return {id: a, word: b, position: c, drag: d, rotation: e};
+	});
+var _user$project$Magnet_Model$Drag = F4(
 	function (a, b, c, d) {
-		return {id: a, word: b, position: c, drag: d};
+		return {start: a, current: b, distanceFromCenter: c, side: d};
 	});
-var _user$project$Magnet_Model$Drag = F2(
-	function (a, b) {
-		return {start: a, current: b};
-	});
+var _user$project$Magnet_Model$Right = {ctor: 'Right'};
+var _user$project$Magnet_Model$Left = {ctor: 'Left'};
 var _user$project$Magnets_Model$emptyModel = _elm_lang$core$Dict$empty;
 var _user$project$App_Model$emptyModel = {magnets: _user$project$Magnets_Model$emptyModel};
 var _user$project$App_Model$Model = function (a) {
@@ -9048,19 +9050,28 @@ var _user$project$Http_Update$decodePosition = A3(
 	_elm_lang$mouse$Mouse$Position,
 	A2(_elm_lang$core$Json_Decode_ops[':='], 'x', _elm_lang$core$Json_Decode$int),
 	A2(_elm_lang$core$Json_Decode_ops[':='], 'y', _elm_lang$core$Json_Decode$int));
-var _user$project$Http_Update$decodeDrag = A3(
-	_elm_lang$core$Json_Decode$object2,
+var _user$project$Http_Update$decodeSide = function (side) {
+	return _elm_lang$core$Json_Decode$succeed(_user$project$Magnet_Model$Left);
+};
+var _user$project$Http_Update$decodeDrag = A5(
+	_elm_lang$core$Json_Decode$object4,
 	_user$project$Magnet_Model$Drag,
 	A2(_elm_lang$core$Json_Decode_ops[':='], 'current', _user$project$Http_Update$decodePosition),
-	A2(_elm_lang$core$Json_Decode_ops[':='], 'start', _user$project$Http_Update$decodePosition));
-var _user$project$Http_Update$decodeMagnet = A5(
-	_elm_lang$core$Json_Decode$object4,
+	A2(_elm_lang$core$Json_Decode_ops[':='], 'start', _user$project$Http_Update$decodePosition),
+	A2(_elm_lang$core$Json_Decode_ops[':='], 'distanceFromCenter', _elm_lang$core$Json_Decode$float),
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'side', _elm_lang$core$Json_Decode$string),
+		_user$project$Http_Update$decodeSide));
+var _user$project$Http_Update$decodeMagnet = A6(
+	_elm_lang$core$Json_Decode$object5,
 	_user$project$Magnet_Model$Magnet,
 	A2(_elm_lang$core$Json_Decode_ops[':='], 'id', _elm_lang$core$Json_Decode$string),
 	A2(_elm_lang$core$Json_Decode_ops[':='], 'word', _elm_lang$core$Json_Decode$string),
 	A2(_elm_lang$core$Json_Decode_ops[':='], 'position', _user$project$Http_Update$decodePosition),
 	_elm_lang$core$Json_Decode$maybe(
-		A2(_elm_lang$core$Json_Decode_ops[':='], 'drag', _user$project$Http_Update$decodeDrag)));
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'drag', _user$project$Http_Update$decodeDrag)),
+	A2(_elm_lang$core$Json_Decode_ops[':='], 'rotation', _elm_lang$core$Json_Decode$float));
 var _user$project$Http_Update$decodeMagnets = _elm_lang$core$Json_Decode$dict(_user$project$Http_Update$decodeMagnet);
 var _user$project$Http_Update$update = F2(
 	function (msg, model) {
@@ -9089,51 +9100,85 @@ var _user$project$Http_Update$init = _user$project$Http_Update$getMagnets;
 var _user$project$Magnet_Utils$setDragAt = F2(
 	function (_p0, position$) {
 		var _p1 = _p0;
-		return A4(
+		var _p7 = _p1.drag;
+		var rotationDelta = function () {
+			var _p2 = _p7;
+			if (_p2.ctor === 'Just') {
+				var sideFactor = function () {
+					var _p3 = _p2._0.side;
+					if (_p3.ctor === 'Left') {
+						return -1;
+					} else {
+						return 1;
+					}
+				}();
+				return ((_elm_lang$core$Basics$toFloat(position$.y - _p2._0.current.y) * sideFactor) * _p2._0.distanceFromCenter) / 100;
+			} else {
+				return _elm_lang$core$Native_Utils.crashCase(
+					'Magnet.Utils',
+					{
+						start: {line: 38, column: 13},
+						end: {line: 52, column: 42}
+					},
+					_p2)('no drag');
+			}
+		}();
+		var rotation$ = _p1.rotation + rotationDelta;
+		return A5(
 			_user$project$Magnet_Model$Magnet,
 			_p1.id,
 			_p1.word,
 			_p1.position,
 			A2(
 				_elm_lang$core$Maybe$map,
-				function (_p2) {
-					var _p3 = _p2;
-					return A2(_user$project$Magnet_Model$Drag, _p3.start, position$);
+				function (_p5) {
+					var _p6 = _p5;
+					return A4(_user$project$Magnet_Model$Drag, _p6.start, position$, _p6.distanceFromCenter, _p6.side);
 				},
-				_p1.drag));
+				_p7),
+			rotation$);
 	});
 var _user$project$Magnet_Utils$setDragStart = F2(
-	function (_p4, position$) {
-		var _p5 = _p4;
-		return A4(
+	function (_p8, position$) {
+		var _p9 = _p8;
+		var _p11 = _p9.position;
+		var distanceFromMagnetCenter = function (_p10) {
+			return _elm_lang$core$Basics$sqrt(
+				_elm_lang$core$Basics$toFloat(_p10));
+		}(
+			Math.pow(_p11.x - position$.x, 2) + Math.pow(_p11.y - position$.y, 2));
+		var side = (_elm_lang$core$Native_Utils.cmp(position$.x, _p11.x) < 0) ? _user$project$Magnet_Model$Left : _user$project$Magnet_Model$Right;
+		return A5(
 			_user$project$Magnet_Model$Magnet,
-			_p5.id,
-			_p5.word,
-			_p5.position,
+			_p9.id,
+			_p9.word,
+			_p11,
 			_elm_lang$core$Maybe$Just(
-				A2(_user$project$Magnet_Model$Drag, position$, position$)));
+				A4(_user$project$Magnet_Model$Drag, position$, position$, distanceFromMagnetCenter, side)),
+			_p9.rotation);
 	});
-var _user$project$Magnet_Utils$getPosition = function (_p6) {
-	var _p7 = _p6;
-	var _p11 = _p7.position;
-	var _p8 = _p7.drag;
-	if (_p8.ctor === 'Nothing') {
-		return _p11;
+var _user$project$Magnet_Utils$getPosition = function (_p12) {
+	var _p13 = _p12;
+	var _p17 = _p13.position;
+	var _p14 = _p13.drag;
+	if (_p14.ctor === 'Nothing') {
+		return _p17;
 	} else {
-		var _p10 = _p8._0.start;
-		var _p9 = _p8._0.current;
-		return A2(_elm_lang$mouse$Mouse$Position, (_p11.x + _p9.x) - _p10.x, (_p11.y + _p9.y) - _p10.y);
+		var _p16 = _p14._0.start;
+		var _p15 = _p14._0.current;
+		return A2(_elm_lang$mouse$Mouse$Position, (_p17.x + _p15.x) - _p16.x, (_p17.y + _p15.y) - _p16.y);
 	}
 };
 var _user$project$Magnet_Utils$setDragEnd = F2(
-	function (_p12, position$) {
-		var _p13 = _p12;
-		return A4(
+	function (_p18, position$) {
+		var _p19 = _p18;
+		return A5(
 			_user$project$Magnet_Model$Magnet,
-			_p13.id,
-			_p13.word,
-			_user$project$Magnet_Utils$getPosition(_p13),
-			_elm_lang$core$Maybe$Nothing);
+			_p19.id,
+			_p19.word,
+			_user$project$Magnet_Utils$getPosition(_p19),
+			_elm_lang$core$Maybe$Nothing,
+			_p19.rotation);
 	});
 var _user$project$Magnets_Update$getDraggedMagnet = function (model) {
 	var isMagnetDragged = function (magnet) {
@@ -9287,14 +9332,13 @@ var _user$project$App_Update$update = F2(
 				};
 		}
 	});
+var _user$project$Magnets_View$px = function (number) {
+	return A2(
+		_elm_lang$core$Basics_ops['++'],
+		_elm_lang$core$Basics$toString(number),
+		'px');
+};
 var _user$project$Magnets_View$printMagnet = function (magnet) {
-	var px = function (number) {
-		return A2(
-			_elm_lang$core$Basics_ops['++'],
-			_elm_lang$core$Basics$toString(number),
-			'px');
-	};
-	var realPosition = _user$project$Magnet_Utils$getPosition(magnet);
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
@@ -9318,17 +9362,30 @@ var _user$project$Magnets_View$printMagnet = function (magnet) {
 						{
 						ctor: '_Tuple2',
 						_0: 'left',
-						_1: px(realPosition.x)
+						_1: _user$project$Magnets_View$px(
+							_user$project$Magnet_Utils$getPosition(magnet).x - 50)
 					},
 						{
 						ctor: '_Tuple2',
 						_0: 'top',
-						_1: px(realPosition.y)
+						_1: _user$project$Magnets_View$px(
+							_user$project$Magnet_Utils$getPosition(magnet).y - 15)
 					},
 						{ctor: '_Tuple2', _0: 'color', _1: 'white'},
 						{ctor: '_Tuple2', _0: 'display', _1: 'flex'},
 						{ctor: '_Tuple2', _0: 'align-items', _1: 'center'},
-						{ctor: '_Tuple2', _0: 'justify-content', _1: 'center'}
+						{ctor: '_Tuple2', _0: 'justify-content', _1: 'center'},
+						{
+						ctor: '_Tuple2',
+						_0: 'transform',
+						_1: A2(
+							_elm_lang$core$Basics_ops['++'],
+							'rotate(',
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								_elm_lang$core$Basics$toString(magnet.rotation),
+								'deg)'))
+					}
 					]))
 			]),
 		_elm_lang$core$Native_List.fromArray(
