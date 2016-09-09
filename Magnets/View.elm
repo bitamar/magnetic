@@ -2,7 +2,7 @@ module Magnets.View exposing (..)
 
 import Dict exposing (values)
 import Html exposing (..)
-import Html.Attributes exposing (style)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (on)
 import Json.Decode as Json exposing ((:=))
 import Magnet.Model exposing (..)
@@ -15,7 +15,7 @@ import Mouse exposing (position)
 view : Magnets.Model.Model -> Html Msg
 view model =
     div []
-        [ div [] <| List.map printMagnet <| Dict.values model
+        [ div [ class "magnets" ] <| List.map printMagnet <| Dict.values model
           -- , div [] [ text <| toString model ]
         ]
 
@@ -30,19 +30,9 @@ printMagnet magnet =
     div
         [ on "mousedown" (Json.map (DragStart magnet) Mouse.position)
         , style
-            [ ( "background-color", "#3C8D2F" )
-            , ( "cursor", "move" )
-            , ( "width", "100px" )
-            , ( "height", "30px" )
-            , ( "border-radius", "2px" )
-            , ( "position", "absolute" )
-            , -- Treat the magnet position as its center.
+            [ -- Treat the magnet position as its center.
               ( "left", px <| (getPosition magnet).x - 50 )
             , ( "top", px <| (getPosition magnet).y - 15 )
-            , ( "color", "white" )
-            , ( "display", "flex" )
-            , ( "align-items", "center" )
-            , ( "justify-content", "center" )
             , ( "transform", "rotate(" ++ (toString magnet.rotation) ++ "deg)" )
             ]
         ]
