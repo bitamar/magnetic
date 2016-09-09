@@ -4,7 +4,7 @@ import Dict
 import Http
 import Json.Decode exposing (..)
 import Magnets.Model exposing (Model)
-import Magnet.Model exposing (Drag, Magnet)
+import Magnet.Model exposing (Drag, Magnet, Side)
 import Mouse exposing (Position)
 import Task
 
@@ -46,18 +46,26 @@ decodeMagnets =
 
 decodeMagnet : Decoder Magnet
 decodeMagnet =
-    object4 Magnet
+    object5 Magnet
         ("id" := string)
         ("word" := string)
         ("position" := decodePosition)
         (maybe ("drag" := decodeDrag))
+        ("rotation" := float)
 
 
 decodeDrag : Decoder Drag
 decodeDrag =
-    object2 Drag
+    object4 Drag
         ("current" := decodePosition)
         ("start" := decodePosition)
+        ("distanceFromCenter" := float)
+        (("side" := string) `andThen` decodeSide)
+
+
+decodeSide : String -> Decoder Side
+decodeSide side =
+    succeed (Magnet.Model.Left)
 
 
 decodePosition : Decoder Position

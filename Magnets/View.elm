@@ -20,32 +20,31 @@ view model =
         ]
 
 
+px : Int -> String
+px number =
+    toString number ++ "px"
+
+
 printMagnet : Magnet -> Html Msg
 printMagnet magnet =
-    let
-        realPosition =
-            getPosition magnet
-
-        px : Int -> String
-        px number =
-            toString number ++ "px"
-    in
-        div
-            [ on "mousedown" (Json.map (DragStart magnet) Mouse.position)
-            , style
-                [ ( "background-color", "#3C8D2F" )
-                , ( "cursor", "move" )
-                , ( "width", "100px" )
-                , ( "height", "30px" )
-                , ( "border-radius", "2px" )
-                , ( "position", "absolute" )
-                , ( "left", px realPosition.x )
-                , ( "top", px realPosition.y )
-                , ( "color", "white" )
-                , ( "display", "flex" )
-                , ( "align-items", "center" )
-                , ( "justify-content", "center" )
-                ]
+    div
+        [ on "mousedown" (Json.map (DragStart magnet) Mouse.position)
+        , style
+            [ ( "background-color", "#3C8D2F" )
+            , ( "cursor", "move" )
+            , ( "width", "100px" )
+            , ( "height", "30px" )
+            , ( "border-radius", "2px" )
+            , ( "position", "absolute" )
+            , -- Treat the magnet position as its center.
+              ( "left", px <| (getPosition magnet).x - 50 )
+            , ( "top", px <| (getPosition magnet).y - 15 )
+            , ( "color", "white" )
+            , ( "display", "flex" )
+            , ( "align-items", "center" )
+            , ( "justify-content", "center" )
+            , ( "transform", "rotate(" ++ (toString magnet.rotation) ++ "deg)" )
             ]
-            [ text magnet.word
-            ]
+        ]
+        [ text magnet.word
+        ]
