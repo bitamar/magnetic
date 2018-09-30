@@ -63,8 +63,11 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Sub.batch
-        [ Mouse.moves MouseMove
-        , Mouse.ups MouseUp
-        ]
+subscriptions model =
+    if model.dragging then
+        Sub.batch
+            [ Mouse.moves MouseMove
+            , Mouse.ups MouseUp
+            ]
+    else
+        Sub.none

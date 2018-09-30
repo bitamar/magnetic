@@ -1,6 +1,6 @@
 module Http.Update exposing (Msg, getMagnets, update)
 
-import App.Model exposing (Model)
+import App.Model exposing (Magnets, Model, emptyModel)
 import Http
 import Json.Decode exposing (Decoder, andThen, dict, field, float, int, map2, map4, map5, maybe, string, succeed)
 import Magnet.Model exposing (Drag, Magnet, Side)
@@ -8,7 +8,7 @@ import Mouse exposing (Position)
 
 
 type Msg
-    = GotMagnets (Result Http.Error Model)
+    = GotMagnets (Result Http.Error Magnets)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -16,8 +16,8 @@ update msg model =
     case msg of
         GotMagnets result ->
             case result of
-                Ok newModel ->
-                    ( newModel
+                Ok magnets ->
+                    ( { emptyModel | magnets = magnets }
                     , Cmd.none
                     )
 
@@ -37,7 +37,7 @@ getMagnets =
     Http.send GotMagnets (Http.get url decodeMagnets)
 
 
-decodeMagnets : Json.Decode.Decoder Model
+decodeMagnets : Json.Decode.Decoder Magnets
 decodeMagnets =
     dict decodeMagnet
 

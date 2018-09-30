@@ -16,7 +16,7 @@ view : Model -> Html Msg
 view model =
     div []
         [ Html.node "link" [ Html.Attributes.rel "stylesheet", Html.Attributes.href "magnet.css" ] []
-        , div [ class "magnets" ] <| List.map printMagnet <| Dict.values model
+        , div [ class "magnets" ] <| List.map printMagnet <| Dict.values model.magnets
         ]
 
 

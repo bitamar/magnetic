@@ -1,6 +1,6 @@
 module Magnet.Update exposing (Msg(..), update)
 
-import App.Model exposing (Model)
+import App.Model exposing (Magnets, Model)
 import Dict
 import Magnet.Model exposing (Magnet)
 import Magnet.Utils exposing (setDragAt, setDragEnd, setDragStart)
@@ -15,51 +15,58 @@ type Msg
 
 update : Model -> Msg -> ( Model, Cmd Msg )
 update model msg =
-    case msg of
-        MouseMove position ->
-            let
-                model_ =
-                    case getDraggedMagnet model of
+    let
+        magnets =
+            model.magnets
+
+        magnets_ =
+            case msg of
+                MouseMove position ->
+                    case getDraggedMagnet magnets of
                         Nothing ->
-                            model
+                            magnets
 
-                        Just magnet_ ->
-                            updateMagnet model <| setDragAt magnet_ position
-            in
-            ( model_, Cmd.none )
+                        Just magnet ->
+                            updateMagnet magnets <| setDragAt magnet position
 
-        MouseUp _ ->
-            let
-                model_ =
-                    case getDraggedMagnet model of
+                MouseUp _ ->
+                    case getDraggedMagnet magnets of
                         Nothing ->
-                            model
+                            magnets
 
-                        Just magnet_ ->
-                            updateMagnet model <| setDragEnd magnet_
-            in
-            ( model_, Cmd.none )
+                        Just magnet ->
+                            updateMagnet magnets <| setDragEnd magnet
 
-        DragStart magnet position ->
-            let
-                magnet_ =
-                    setDragStart magnet position
+                DragStart magnet position ->
+                    let
+                        magnet_ =
+                            setDragStart magnet position
+                    in
+                    updateMagnet magnets magnet_
 
-                model_ =
-                    updateMagnet model magnet_
-            in
-            ( model_, Cmd.none )
+        dragging =
+            case msg of
+                MouseUp _ ->
+                    False
+
+                MouseMove _ ->
+                    model.dragging
+
+                DragStart _ _ ->
+                    True
+    in
+    ( { model | magnets = magnets_, dragging = dragging }, Cmd.none )
 
 
 {-| Replace the updated magnet on the magnets dictionary.
 -}
-updateMagnet : Model -> Magnet -> Model
-updateMagnet model magnet =
-    Dict.update magnet.id (\_ -> Just magnet) model
+updateMagnet : Magnets -> Magnet -> Magnets
+updateMagnet magnets magnet =
+    Dict.update magnet.id (\_ -> Just magnet) magnets
 
 
-getDraggedMagnet : Model -> Maybe Magnet
-getDraggedMagnet model =
+getDraggedMagnet : Magnets -> Maybe Magnet
+getDraggedMagnet magnets =
     let
         isMagnetDragged : Magnet -> Bool
         isMagnetDragged magnet =
@@ -70,4 +77,4 @@ getDraggedMagnet model =
                 Nothing ->
                     False
     in
-    List.head <| List.filter isMagnetDragged <| Dict.values model
+    List.head <| List.filter isMagnetDragged <| Dict.values magnets
