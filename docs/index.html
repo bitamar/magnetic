@@ -9700,75 +9700,7 @@ var _bitamar$magnetic$Magnet_View$printMagnet = function (magnet) {
 											_elm_lang$core$Basics$toString(magnet.rotation),
 											'deg)'))
 								},
-								_1: {
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'color', _1: 'white'},
-									_1: {
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'background-color', _1: '#333'},
-										_1: {
-											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'border', _1: '1px solid white'},
-											_1: {
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
-												_1: {
-													ctor: '::',
-													_0: {ctor: '_Tuple2', _0: 'align-items', _1: 'center'},
-													_1: {
-														ctor: '::',
-														_0: {ctor: '_Tuple2', _0: 'justify-content', _1: 'center'},
-														_1: {
-															ctor: '::',
-															_0: {ctor: '_Tuple2', _0: 'cursor', _1: 'move'},
-															_1: {
-																ctor: '::',
-																_0: {ctor: '_Tuple2', _0: 'width', _1: '100px'},
-																_1: {
-																	ctor: '::',
-																	_0: {ctor: '_Tuple2', _0: 'height', _1: '30px'},
-																	_1: {
-																		ctor: '::',
-																		_0: {ctor: '_Tuple2', _0: 'border-radius', _1: '2px'},
-																		_1: {
-																			ctor: '::',
-																			_0: {ctor: '_Tuple2', _0: 'position', _1: 'absolute'},
-																			_1: {
-																				ctor: '::',
-																				_0: {ctor: '_Tuple2', _0: '-webkit-touch-callout', _1: 'none'},
-																				_1: {
-																					ctor: '::',
-																					_0: {ctor: '_Tuple2', _0: '-webkit-user-select', _1: 'none'},
-																					_1: {
-																						ctor: '::',
-																						_0: {ctor: '_Tuple2', _0: '-khtml-user-select', _1: 'none'},
-																						_1: {
-																							ctor: '::',
-																							_0: {ctor: '_Tuple2', _0: '-moz-user-select', _1: 'none'},
-																							_1: {
-																								ctor: '::',
-																								_0: {ctor: '_Tuple2', _0: '-ms-user-select', _1: 'none'},
-																								_1: {
-																									ctor: '::',
-																									_0: {ctor: '_Tuple2', _0: 'user-select', _1: 'none'},
-																									_1: {ctor: '[]'}
-																								}
-																							}
-																						}
-																					}
-																				}
-																			}
-																		}
-																	}
-																}
-															}
-														}
-													}
-												}
-											}
-										}
-									}
-								}
+								_1: {ctor: '[]'}
 							}
 						}
 					}),
@@ -9787,18 +9719,34 @@ var _bitamar$magnetic$Magnet_View$view = function (model) {
 		{ctor: '[]'},
 		{
 			ctor: '::',
-			_0: A2(
-				_elm_lang$html$Html$div,
+			_0: A3(
+				_elm_lang$html$Html$node,
+				'link',
 				{
 					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$class('magnets'),
-					_1: {ctor: '[]'}
+					_0: _elm_lang$html$Html_Attributes$rel('stylesheet'),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$href('magnet.css'),
+						_1: {ctor: '[]'}
+					}
 				},
-				A2(
-					_elm_lang$core$List$map,
-					_bitamar$magnetic$Magnet_View$printMagnet,
-					_elm_lang$core$Dict$values(model))),
-			_1: {ctor: '[]'}
+				{ctor: '[]'}),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$div,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$class('magnets'),
+						_1: {ctor: '[]'}
+					},
+					A2(
+						_elm_lang$core$List$map,
+						_bitamar$magnetic$Magnet_View$printMagnet,
+						_elm_lang$core$Dict$values(model))),
+				_1: {ctor: '[]'}
+			}
 		});
 };
 var _bitamar$magnetic$App_View$viewMainContent = function (model) {
