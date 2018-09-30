@@ -33,6 +33,23 @@ printMagnet magnet =
               ( "left", px <| (getPosition magnet).x - 50 )
             , ( "top", px <| (getPosition magnet).y - 15 )
             , ( "transform", "rotate(" ++ toString magnet.rotation ++ "deg)" )
+            , ( "color", "white" )
+            , ( "background-color", "#333" )
+            , ( "border", "1px solid white" )
+            , ( "display", "flex" )
+            , ( "align-items", "center" )
+            , ( "justify-content", "center" )
+            , ( "cursor", "move" )
+            , ( "width", "100px" )
+            , ( "height", "30px" )
+            , ( "border-radius", "2px" )
+            , ( "position", "absolute" )
+            , ( "-webkit-touch-callout", "none" )
+            , ( "-webkit-user-select", "none" )
+            , ( "-khtml-user-select", "none" )
+            , ( "-moz-user-select", "none" )
+            , ( "-ms-user-select", "none" )
+            , ( "user-select", "none" )
             ]
         ]
         [ text magnet.word
