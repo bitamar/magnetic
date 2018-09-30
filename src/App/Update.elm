@@ -2,13 +2,13 @@ module App.Update exposing (Msg(..), init, subscriptions, update)
 
 import App.Model exposing (Model, emptyModel)
 import Http.Update exposing (Msg, getMagnets)
-import Magnets.Update exposing (Msg)
+import Magnet.Update exposing (Msg)
 import Mouse exposing (Position)
 
 
 type Msg
     = Http Http.Update.Msg
-    | Magnets Magnets.Update.Msg
+    | Magnets Magnet.Update.Msg
     | MouseMove Position
     | MouseUp Position
 
@@ -33,7 +33,7 @@ update msg model =
         Magnets msg_ ->
             let
                 ( model_, cmds ) =
-                    Magnets.Update.update model msg_
+                    Magnet.Update.update model msg_
             in
             ( model_
             , Cmd.map Magnets cmds
@@ -42,7 +42,7 @@ update msg model =
         MouseMove position ->
             let
                 ( model_, cmds ) =
-                    Magnets.Update.update model <| Magnets.Update.MouseMove position
+                    Magnet.Update.update model <| Magnet.Update.MouseMove position
             in
             ( model_
             , Cmd.map Magnets cmds
@@ -51,7 +51,7 @@ update msg model =
         MouseUp position ->
             let
                 ( model_, cmds ) =
-                    Magnets.Update.update model <| Magnets.Update.MouseUp position
+                    Magnet.Update.update model <| Magnet.Update.MouseUp position
             in
             ( model_
             , Cmd.map Magnets cmds

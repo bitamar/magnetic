@@ -1,4 +1,4 @@
-module Magnets.View exposing (view)
+module Magnet.View exposing (view)
 
 import App.Model exposing (Model)
 import Dict
@@ -7,8 +7,8 @@ import Html.Attributes exposing (class, style)
 import Html.Events exposing (on)
 import Json.Decode as Json
 import Magnet.Model exposing (Magnet)
+import Magnet.Update exposing (Msg(DragStart))
 import Magnet.Utils exposing (getPosition)
-import Magnets.Update exposing (Msg(DragStart))
 import Mouse
 
 

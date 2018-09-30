@@ -1,4 +1,4 @@
-module Magnets.Update exposing (Msg(..), update)
+module Magnet.Update exposing (Msg(..), update)
 
 import App.Model exposing (Model)
 import Dict
