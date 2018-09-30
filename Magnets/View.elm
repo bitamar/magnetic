@@ -1,23 +1,21 @@
-module Magnets.View exposing (..)
+module Magnets.View exposing (view)
 
-import Dict exposing (values)
-import Html exposing (..)
+import Dict
+import Html exposing (Html, div, text)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (on)
 import Json.Decode as Json
-import Magnet.Model exposing (..)
-import Magnet.Utils exposing (..)
-import Magnets.Model exposing (..)
-import Magnets.Update exposing (..)
-import Mouse exposing (position)
+import Magnet.Model exposing (Magnet)
+import Magnet.Utils exposing (getPosition)
+import Magnets.Model exposing (Model)
+import Magnets.Update exposing (Msg(DragStart))
+import Mouse
 
 
-view : Magnets.Model.Model -> Html Msg
+view : Model -> Html Msg
 view model =
     div []
         [ div [ class "magnets" ] <| List.map printMagnet <| Dict.values model
-
-        -- , div [] [ text <| toString model ]
         ]
 
 

@@ -1,12 +1,10 @@
-module Http.Update exposing (..)
+module Http.Update exposing (Msg, getMagnets, update)
 
-import Dict
 import Http
-import Json.Decode exposing (..)
+import Json.Decode exposing (Decoder, andThen, dict, field, float, int, map2, map4, map5, maybe, string, succeed)
 import Magnet.Model exposing (Drag, Magnet, Side)
 import Magnets.Model exposing (Model)
 import Mouse exposing (Position)
-import Task
 
 
 type Msg
@@ -64,7 +62,7 @@ decodeDrag =
 
 
 decodeSide : String -> Decoder Side
-decodeSide side =
+decodeSide _ =
     succeed Magnet.Model.Left
 
 

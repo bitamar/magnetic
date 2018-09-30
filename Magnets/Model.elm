@@ -1,6 +1,6 @@
-module Magnets.Model exposing (..)
+module Magnets.Model exposing (Model, emptyModel)
 
-import Dict exposing (Dict, fromList)
+import Dict exposing (Dict)
 import Magnet.Model exposing (Magnet)
 
 

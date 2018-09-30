@@ -1,9 +1,9 @@
-module Magnets.Update exposing (..)
+module Magnets.Update exposing (Msg(..), update)
 
-import Dict exposing (values)
+import Dict
 import Magnet.Model exposing (Magnet)
 import Magnet.Utils exposing (setDragAt, setDragEnd, setDragStart)
-import Magnets.Model exposing (..)
+import Magnets.Model exposing (Model)
 import Mouse exposing (Position)
 
 
@@ -28,7 +28,7 @@ update model msg =
             in
             ( model_, Cmd.none )
 
-        MouseUp position ->
+        MouseUp _ ->
             let
                 model_ =
                     case getDraggedMagnet model of
@@ -36,7 +36,7 @@ update model msg =
                             model
 
                         Just magnet_ ->
-                            updateMagnet model <| setDragEnd magnet_ position
+                            updateMagnet model <| setDragEnd magnet_
             in
             ( model_, Cmd.none )
 

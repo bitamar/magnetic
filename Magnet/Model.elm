@@ -1,4 +1,4 @@
-module Magnet.Model exposing (..)
+module Magnet.Model exposing (Drag, Magnet, Side(..))
 
 import Mouse exposing (Position)
 

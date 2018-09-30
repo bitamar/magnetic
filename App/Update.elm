@@ -1,16 +1,16 @@
 module App.Update exposing (Msg(..), init, subscriptions, update)
 
 import Http.Update exposing (Msg, getMagnets)
-import Magnets.Model exposing (..)
+import Magnets.Model exposing (Model, emptyModel)
 import Magnets.Update exposing (Msg)
-import Mouse exposing (Position, moves)
+import Mouse exposing (Position)
 
 
 type Msg
     = Http Http.Update.Msg
     | Magnets Magnets.Update.Msg
-    | MouseMove Mouse.Position
-    | MouseUp Mouse.Position
+    | MouseMove Position
+    | MouseUp Position
 
 
 init : ( Model, Cmd Msg )
@@ -21,19 +21,19 @@ init =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Http msg ->
+        Http msg_ ->
             let
                 ( model_, cmds ) =
-                    Http.Update.update msg model
+                    Http.Update.update msg_ model
             in
             ( model_
             , Cmd.map Http cmds
             )
 
-        Magnets msg ->
+        Magnets msg_ ->
             let
                 ( model_, cmds ) =
-                    Magnets.Update.update model msg
+                    Magnets.Update.update model msg_
             in
             ( model_
             , Cmd.map Magnets cmds
@@ -63,7 +63,7 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Sub.batch
         [ Mouse.moves MouseMove
         , Mouse.ups MouseUp

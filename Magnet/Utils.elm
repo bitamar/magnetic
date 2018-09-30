@@ -1,6 +1,6 @@
-module Magnet.Utils exposing (..)
+module Magnet.Utils exposing (getPosition, setDragAt, setDragEnd, setDragStart)
 
-import Magnet.Model exposing (..)
+import Magnet.Model exposing (Drag, Magnet, Side(Left, Right))
 import Mouse exposing (Position)
 
 
@@ -17,7 +17,7 @@ getPosition { position, drag } =
 
 
 setDragStart : Magnet -> Position -> Magnet
-setDragStart ({ id, word, position, drag, rotation } as magnet) position_ =
+setDragStart { id, word, position, rotation } position_ =
     let
         side =
             if position_.x < position.x then
@@ -32,11 +32,11 @@ setDragStart ({ id, word, position, drag, rotation } as magnet) position_ =
 
 
 setDragAt : Magnet -> Position -> Magnet
-setDragAt ({ id, word, position, drag, rotation } as magnet) position_ =
+setDragAt { id, word, position, drag, rotation } position_ =
     let
         rotationDelta =
             case drag of
-                Just { start, current, distanceFromCenter, side } ->
+                Just { current, distanceFromCenter, side } ->
                     let
                         sideFactor =
                             case side of
@@ -48,15 +48,16 @@ setDragAt ({ id, word, position, drag, rotation } as magnet) position_ =
                     in
                     toFloat (position_.y - current.y) * sideFactor * distanceFromCenter / 100
 
+                -- This branch isn't possible.
                 _ ->
-                    Debug.crash "no drag"
+                    1
 
         rotation_ =
             rotation + rotationDelta
     in
-    Magnet id word position (Maybe.map (\{ start, current, distanceFromCenter, side } -> Drag start position_ distanceFromCenter side) drag) rotation_
+    Magnet id word position (Maybe.map (\{ start, distanceFromCenter, side } -> Drag start position_ distanceFromCenter side) drag) rotation_
 
 
-setDragEnd : Magnet -> Position -> Magnet
-setDragEnd ({ id, word, position, drag, rotation } as magnet) position_ =
+setDragEnd : Magnet -> Magnet
+setDragEnd ({ id, word, rotation } as magnet) =
     Magnet id word (getPosition magnet) Nothing rotation

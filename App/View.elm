@@ -1,9 +1,9 @@
-module App.View exposing (..)
+module App.View exposing (view)
 
-import App.Update exposing (..)
-import Html exposing (..)
-import Magnets.Model exposing (..)
-import Magnets.View exposing (..)
+import App.Update exposing (Msg(Magnets))
+import Html exposing (Html, div)
+import Magnets.Model exposing (Model)
+import Magnets.View
 
 
 view : Model -> Html Msg
