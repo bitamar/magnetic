@@ -1,7 +1,7 @@
 module App.Update exposing (Msg(..), init, subscriptions, update)
 
+import App.Model exposing (Model, emptyModel)
 import Http.Update exposing (Msg, getMagnets)
-import Magnets.Model exposing (Model, emptyModel)
 import Magnets.Update exposing (Msg)
 import Mouse exposing (Position)
 

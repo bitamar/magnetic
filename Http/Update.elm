@@ -1,9 +1,9 @@
 module Http.Update exposing (Msg, getMagnets, update)
 
+import App.Model exposing (Model)
 import Http
 import Json.Decode exposing (Decoder, andThen, dict, field, float, int, map2, map4, map5, maybe, string, succeed)
 import Magnet.Model exposing (Drag, Magnet, Side)
-import Magnets.Model exposing (Model)
 import Mouse exposing (Position)
 
 

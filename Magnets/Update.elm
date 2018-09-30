@@ -1,9 +1,9 @@
 module Magnets.Update exposing (Msg(..), update)
 
+import App.Model exposing (Model)
 import Dict
 import Magnet.Model exposing (Magnet)
 import Magnet.Utils exposing (setDragAt, setDragEnd, setDragStart)
-import Magnets.Model exposing (Model)
 import Mouse exposing (Position)
 
 

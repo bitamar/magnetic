@@ -1,9 +1,9 @@
 module Main exposing (main)
 
+import App.Model exposing (Model)
 import App.Update exposing (init, subscriptions, update)
 import App.View exposing (view)
 import Html
-import Magnets.Model exposing (Model)
 
 
 main : Program Never Model App.Update.Msg

@@ -1,4 +1,4 @@
-module Magnets.Model exposing (Model, emptyModel)
+module App.Model exposing (Model, emptyModel)
 
 import Dict exposing (Dict)
 import Magnet.Model exposing (Magnet)
