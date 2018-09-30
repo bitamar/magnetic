@@ -1,9 +1,8 @@
 module App.View exposing (..)
 
-import Html exposing (..)
-import Html.App as Html
-import App.Model exposing (..)
 import App.Update exposing (..)
+import Html exposing (..)
+import Magnets.Model exposing (..)
 import Magnets.View exposing (..)
 
 
@@ -14,4 +13,4 @@ view model =
 
 viewMainContent : Model -> Html Msg
 viewMainContent model =
-    Html.map Magnets (Magnets.View.view model.magnets)
+    Html.map Magnets (Magnets.View.view model)

@@ -1,10 +1,10 @@
 module Magnets.Update exposing (..)
 
 import Dict exposing (values)
-import Mouse exposing (Position)
-import Magnet.Utils exposing (setDragAt, setDragStart, setDragEnd)
 import Magnet.Model exposing (Magnet)
+import Magnet.Utils exposing (setDragAt, setDragEnd, setDragStart)
 import Magnets.Model exposing (..)
+import Mouse exposing (Position)
 
 
 type Msg
@@ -18,37 +18,37 @@ update model msg =
     case msg of
         MouseMove position ->
             let
-                model' =
+                model_ =
                     case getDraggedMagnet model of
                         Nothing ->
                             model
 
-                        Just magnet' ->
-                            updateMagnet model <| setDragAt magnet' position
+                        Just magnet_ ->
+                            updateMagnet model <| setDragAt magnet_ position
             in
-                ( model', Cmd.none )
+            ( model_, Cmd.none )
 
         MouseUp position ->
             let
-                model' =
+                model_ =
                     case getDraggedMagnet model of
                         Nothing ->
                             model
 
-                        Just magnet' ->
-                            updateMagnet model <| setDragEnd magnet' position
+                        Just magnet_ ->
+                            updateMagnet model <| setDragEnd magnet_ position
             in
-                ( model', Cmd.none )
+            ( model_, Cmd.none )
 
         DragStart magnet position ->
             let
-                magnet' =
+                magnet_ =
                     setDragStart magnet position
 
-                model' =
-                    updateMagnet model magnet'
+                model_ =
+                    updateMagnet model magnet_
             in
-                ( model', Cmd.none )
+            ( model_, Cmd.none )
 
 
 {-| Replace the updated magnet on the magnets dictionary.
@@ -70,4 +70,4 @@ getDraggedMagnet model =
                 Nothing ->
                     False
     in
-        List.head <| List.filter isMagnetDragged <| Dict.values model
+    List.head <| List.filter isMagnetDragged <| Dict.values model

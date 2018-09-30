@@ -17,22 +17,22 @@ getPosition { position, drag } =
 
 
 setDragStart : Magnet -> Position -> Magnet
-setDragStart ({ id, word, position, drag, rotation } as magnet) position' =
+setDragStart ({ id, word, position, drag, rotation } as magnet) position_ =
     let
         side =
-            if position'.x < position.x then
+            if position_.x < position.x then
                 Left
             else
                 Right
 
         distanceFromMagnetCenter =
-            sqrt << toFloat <| (position.x - position'.x) ^ 2 + (position.y - position'.y) ^ 2
+            sqrt << toFloat <| (position.x - position_.x) ^ 2 + (position.y - position_.y) ^ 2
     in
-        Magnet id word position (Just (Drag position' position' distanceFromMagnetCenter side)) rotation
+    Magnet id word position (Just (Drag position_ position_ distanceFromMagnetCenter side)) rotation
 
 
 setDragAt : Magnet -> Position -> Magnet
-setDragAt ({ id, word, position, drag, rotation } as magnet) position' =
+setDragAt ({ id, word, position, drag, rotation } as magnet) position_ =
     let
         rotationDelta =
             case drag of
@@ -46,17 +46,17 @@ setDragAt ({ id, word, position, drag, rotation } as magnet) position' =
                                 Right ->
                                     1
                     in
-                        toFloat (position'.y - current.y) * sideFactor * distanceFromCenter / 100
+                    toFloat (position_.y - current.y) * sideFactor * distanceFromCenter / 100
 
                 _ ->
                     Debug.crash "no drag"
 
-        rotation' =
+        rotation_ =
             rotation + rotationDelta
     in
-        Magnet id word position (Maybe.map (\{ start, current, distanceFromCenter, side } -> Drag start position' distanceFromCenter side) drag) rotation'
+    Magnet id word position (Maybe.map (\{ start, current, distanceFromCenter, side } -> Drag start position_ distanceFromCenter side) drag) rotation_
 
 
 setDragEnd : Magnet -> Position -> Magnet
-setDragEnd ({ id, word, position, drag, rotation } as magnet) position' =
+setDragEnd ({ id, word, position, drag, rotation } as magnet) position_ =
     Magnet id word (getPosition magnet) Nothing rotation

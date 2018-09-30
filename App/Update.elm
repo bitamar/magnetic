@@ -1,9 +1,9 @@
-module App.Update exposing (init, subscriptions, update, Msg(..))
+module App.Update exposing (Msg(..), init, subscriptions, update)
 
-import App.Model exposing (..)
-import Http.Update exposing (init, Msg)
+import Http.Update exposing (Msg, getMagnets)
+import Magnets.Model exposing (..)
 import Magnets.Update exposing (Msg)
-import Mouse exposing (moves, Position)
+import Mouse exposing (Position, moves)
 
 
 type Msg
@@ -15,7 +15,7 @@ type Msg
 
 init : ( Model, Cmd Msg )
 init =
-    ( emptyModel, Cmd.map Http Http.Update.init )
+    ( emptyModel, Cmd.map Http getMagnets )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -23,39 +23,39 @@ update msg model =
     case msg of
         Http msg ->
             let
-                ( magnets', cmds ) =
-                    Http.Update.update msg model.magnets
+                ( model_, cmds ) =
+                    Http.Update.update msg model
             in
-                ( { model | magnets = magnets' }
-                , Cmd.map Http cmds
-                )
+            ( model_
+            , Cmd.map Http cmds
+            )
 
         Magnets msg ->
             let
-                ( magnets', cmds ) =
-                    Magnets.Update.update model.magnets msg
+                ( model_, cmds ) =
+                    Magnets.Update.update model msg
             in
-                ( { model | magnets = magnets' }
-                , Cmd.map Magnets cmds
-                )
+            ( model_
+            , Cmd.map Magnets cmds
+            )
 
         MouseMove position ->
             let
-                ( magnets', cmds ) =
-                    Magnets.Update.update model.magnets <| Magnets.Update.MouseMove position
+                ( model_, cmds ) =
+                    Magnets.Update.update model <| Magnets.Update.MouseMove position
             in
-                ( { model | magnets = magnets' }
-                , Cmd.map Magnets cmds
-                )
+            ( model_
+            , Cmd.map Magnets cmds
+            )
 
         MouseUp position ->
             let
-                ( magnets', cmds ) =
-                    Magnets.Update.update model.magnets <| Magnets.Update.MouseUp position
+                ( model_, cmds ) =
+                    Magnets.Update.update model <| Magnets.Update.MouseUp position
             in
-                ( { model | magnets = magnets' }
-                , Cmd.map Magnets cmds
-                )
+            ( model_
+            , Cmd.map Magnets cmds
+            )
 
 
 
