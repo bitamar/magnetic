@@ -1,7 +1,7 @@
-module App.Model exposing (Magnets, Model, emptyModel)
+module App.Model exposing (IncomingMessage(..), Magnets, Model, emptyModel, serverUrl)
 
 import Dict exposing (Dict)
-import Magnet.Model exposing (Magnet)
+import Magnet.Model exposing (Magnet, Move)
 
 
 type alias Magnets =
@@ -14,8 +14,18 @@ type alias Model =
     }
 
 
+type IncomingMessage
+    = AllMagnets Magnets
+    | SingleMove Move
+
+
 emptyModel : Model
 emptyModel =
     { magnets = Dict.empty
     , dragging = False
     }
+
+
+serverUrl : String
+serverUrl =
+    "ws://localhost:3000"

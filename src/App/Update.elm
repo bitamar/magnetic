@@ -1,35 +1,34 @@
 module App.Update exposing (Msg(..), init, subscriptions, update)
 
-import App.Model exposing (Model, emptyModel)
-import Http.Update exposing (Msg, getMagnets)
+import App.Model
+    exposing
+        ( IncomingMessage(AllMagnets, SingleMove)
+        , Model
+        , emptyModel
+        , serverUrl
+        )
+import Json.Decode exposing (decodeString)
 import Magnet.Update exposing (Msg)
+import Magnet.Utils exposing (decodeMessage)
 import Mouse exposing (Position)
+import WebSocket
 
 
 type Msg
-    = Http Http.Update.Msg
-    | Magnets Magnet.Update.Msg
+    = Magnets Magnet.Update.Msg
     | MouseMove Position
     | MouseUp Position
+    | IncomingMessage String
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( emptyModel, Cmd.map Http getMagnets )
+    emptyModel ! []
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Http msg_ ->
-            let
-                ( model_, cmds ) =
-                    Http.Update.update msg_ model
-            in
-            ( model_
-            , Cmd.map Http cmds
-            )
-
         Magnets msg_ ->
             let
                 ( model_, cmds ) =
@@ -57,6 +56,23 @@ update msg model =
             , Cmd.map Magnets cmds
             )
 
+        IncomingMessage string ->
+            case decodeString decodeMessage string of
+                Ok message ->
+                    case message of
+                        AllMagnets magnets ->
+                            { model | magnets = magnets } ! []
+
+                        SingleMove move ->
+                            let
+                                ( model_, cmds ) =
+                                    Magnet.Update.update model <| Magnet.Update.IncomingMove move
+                            in
+                            ( model_, Cmd.map Magnets cmds )
+
+                Err _ ->
+                    model ! []
+
 
 
 -- SUBSCRIPTIONS
@@ -64,10 +80,19 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    if model.dragging then
-        Sub.batch
-            [ Mouse.moves MouseMove
-            , Mouse.ups MouseUp
-            ]
-    else
-        Sub.none
+    let
+        ws =
+            WebSocket.listen serverUrl IncomingMessage
+
+        subs =
+            if model.dragging then
+                [ ws
+                , -- Subscribe to mouse move and mouse up, only when dragging already.
+                  Mouse.moves MouseMove
+                , Mouse.ups MouseUp
+                ]
+
+            else
+                [ ws ]
+    in
+    Sub.batch subs

@@ -1,6 +1,18 @@
-module Magnet.Utils exposing (getPosition, setDragAt, setDragEnd, setDragStart)
+module Magnet.Utils exposing
+    ( decodeMagnets
+    , decodeMessage
+    , decodeMove
+    , encodeMove
+    , getPosition
+    , setDragAt
+    , setDragEnd
+    , setDragStart
+    )
 
-import Magnet.Model exposing (Drag, Magnet, Side(Left, Right))
+import App.Model exposing (IncomingMessage(AllMagnets, SingleMove), Magnets)
+import Json.Decode as Decode exposing (field)
+import Json.Encode as Encode
+import Magnet.Model exposing (Drag, Magnet, Move, Side(Left, Right))
 import Mouse exposing (Position)
 
 
@@ -22,6 +34,7 @@ setDragStart { id, word, position, rotation } position_ =
         side =
             if position_.x < position.x then
                 Left
+
             else
                 Right
 
@@ -61,3 +74,79 @@ setDragAt { id, word, position, drag, rotation } position_ =
 setDragEnd : Magnet -> Magnet
 setDragEnd ({ id, word, rotation } as magnet) =
     Magnet id word (getPosition magnet) Nothing rotation
+
+
+decodeMessage : Decode.Decoder IncomingMessage
+decodeMessage =
+    Decode.oneOf [ decodeSingleMoveMessage, decodeAllMagnnetsMessage ]
+
+
+decodeSingleMoveMessage : Decode.Decoder IncomingMessage
+decodeSingleMoveMessage =
+    Decode.map SingleMove decodeMove
+
+
+decodeAllMagnnetsMessage : Decode.Decoder IncomingMessage
+decodeAllMagnnetsMessage =
+    Decode.map AllMagnets decodeMagnets
+
+
+encodePosition : Position -> Encode.Value
+encodePosition position =
+    Encode.object
+        []
+
+
+encodeMove : Magnet -> Encode.Value
+encodeMove magnet =
+    Encode.object
+        [ ( "i", Encode.string magnet.id )
+        , ( "x", Encode.int magnet.position.x )
+        , ( "y", Encode.int magnet.position.y )
+        , ( "r", Encode.float magnet.rotation )
+        ]
+
+
+decodeMove : Decode.Decoder Move
+decodeMove =
+    Decode.map4 Move
+        (field "i" Decode.string)
+        (field "x" Decode.int)
+        (field "y" Decode.int)
+        (field "r" Decode.float)
+
+
+decodeMagnets : Decode.Decoder Magnets
+decodeMagnets =
+    Decode.dict decodeMagnet
+
+
+decodeMagnet : Decode.Decoder Magnet
+decodeMagnet =
+    Decode.map5 Magnet
+        (field "id" Decode.string)
+        (field "word" Decode.string)
+        (field "position" decodePosition)
+        (Decode.maybe (field "drag" decodeDrag))
+        (field "rotation" Decode.float)
+
+
+decodeDrag : Decode.Decoder Drag
+decodeDrag =
+    Decode.map4 Drag
+        (field "current" decodePosition)
+        (field "start" decodePosition)
+        (field "distanceFromCenter" Decode.float)
+        (field "side" Decode.string |> Decode.andThen decodeSide)
+
+
+decodeSide : String -> Decode.Decoder Side
+decodeSide _ =
+    Decode.succeed Magnet.Model.Left
+
+
+decodePosition : Decode.Decoder Position
+decodePosition =
+    Decode.map2 Position
+        (field "x" Decode.int)
+        (field "y" Decode.int)

@@ -1,4 +1,4 @@
-module Magnet.Model exposing (Drag, Magnet, Side(..))
+module Magnet.Model exposing (Drag, Magnet, Move, Side(Left, Right))
 
 import Mouse exposing (Position)
 
@@ -8,6 +8,14 @@ type alias Magnet =
     , word : String
     , position : Position
     , drag : Maybe Drag
+    , rotation : Float
+    }
+
+
+type alias Move =
+    { id : String
+    , x : Int
+    , y : Int
     , rotation : Float
     }
 
