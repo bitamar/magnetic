@@ -28,4 +28,5 @@ emptyModel =
 
 serverUrl : String
 serverUrl =
-    "ws://localhost:3000"
+    --    "ws://localhost:3000"
+    "wss://echoboard.itu.sh/"

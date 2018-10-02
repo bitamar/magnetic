@@ -6515,496 +6515,724 @@ var _bitamar$magnetic$Magnet_Model$Magnet = F5(
 	function (a, b, c, d, e) {
 		return {id: a, word: b, position: c, drag: d, rotation: e};
 	});
+var _bitamar$magnetic$Magnet_Model$Move = F4(
+	function (a, b, c, d) {
+		return {id: a, x: b, y: c, rotation: d};
+	});
 var _bitamar$magnetic$Magnet_Model$Drag = F4(
 	function (a, b, c, d) {
 		return {start: a, current: b, distanceFromCenter: c, side: d};
 	});
 var _bitamar$magnetic$Magnet_Model$Right = {ctor: 'Right'};
 var _bitamar$magnetic$Magnet_Model$Left = {ctor: 'Left'};
-var _bitamar$magnetic$App_Model$emptyModel = _elm_lang$core$Dict$empty;
-var _elm_lang$http$Native_Http = function() {
-
-
-// ENCODING AND DECODING
-
-function encodeUri(string)
-{
-	return encodeURIComponent(string);
-}
-
-function decodeUri(string)
-{
-	try
-	{
-		return _elm_lang$core$Maybe$Just(decodeURIComponent(string));
-	}
-	catch(e)
-	{
-		return _elm_lang$core$Maybe$Nothing;
-	}
-}
-
-
-// SEND REQUEST
-
-function toTask(request, maybeProgress)
-{
-	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
-	{
-		var xhr = new XMLHttpRequest();
-
-		configureProgress(xhr, maybeProgress);
-
-		xhr.addEventListener('error', function() {
-			callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'NetworkError' }));
-		});
-		xhr.addEventListener('timeout', function() {
-			callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'Timeout' }));
-		});
-		xhr.addEventListener('load', function() {
-			callback(handleResponse(xhr, request.expect.responseToResult));
-		});
-
-		try
-		{
-			xhr.open(request.method, request.url, true);
-		}
-		catch (e)
-		{
-			return callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'BadUrl', _0: request.url }));
-		}
-
-		configureRequest(xhr, request);
-		send(xhr, request.body);
-
-		return function() { xhr.abort(); };
-	});
-}
-
-function configureProgress(xhr, maybeProgress)
-{
-	if (maybeProgress.ctor === 'Nothing')
-	{
-		return;
-	}
-
-	xhr.addEventListener('progress', function(event) {
-		if (!event.lengthComputable)
-		{
-			return;
-		}
-		_elm_lang$core$Native_Scheduler.rawSpawn(maybeProgress._0({
-			bytes: event.loaded,
-			bytesExpected: event.total
-		}));
-	});
-}
-
-function configureRequest(xhr, request)
-{
-	function setHeader(pair)
-	{
-		xhr.setRequestHeader(pair._0, pair._1);
-	}
-
-	A2(_elm_lang$core$List$map, setHeader, request.headers);
-	xhr.responseType = request.expect.responseType;
-	xhr.withCredentials = request.withCredentials;
-
-	if (request.timeout.ctor === 'Just')
-	{
-		xhr.timeout = request.timeout._0;
-	}
-}
-
-function send(xhr, body)
-{
-	switch (body.ctor)
-	{
-		case 'EmptyBody':
-			xhr.send();
-			return;
-
-		case 'StringBody':
-			xhr.setRequestHeader('Content-Type', body._0);
-			xhr.send(body._1);
-			return;
-
-		case 'FormDataBody':
-			xhr.send(body._0);
-			return;
-	}
-}
-
-
-// RESPONSES
-
-function handleResponse(xhr, responseToResult)
-{
-	var response = toResponse(xhr);
-
-	if (xhr.status < 200 || 300 <= xhr.status)
-	{
-		response.body = xhr.responseText;
-		return _elm_lang$core$Native_Scheduler.fail({
-			ctor: 'BadStatus',
-			_0: response
-		});
-	}
-
-	var result = responseToResult(response);
-
-	if (result.ctor === 'Ok')
-	{
-		return _elm_lang$core$Native_Scheduler.succeed(result._0);
-	}
-	else
-	{
-		response.body = xhr.responseText;
-		return _elm_lang$core$Native_Scheduler.fail({
-			ctor: 'BadPayload',
-			_0: result._0,
-			_1: response
-		});
-	}
-}
-
-function toResponse(xhr)
-{
-	return {
-		status: { code: xhr.status, message: xhr.statusText },
-		headers: parseHeaders(xhr.getAllResponseHeaders()),
-		url: xhr.responseURL,
-		body: xhr.response
-	};
-}
-
-function parseHeaders(rawHeaders)
-{
-	var headers = _elm_lang$core$Dict$empty;
-
-	if (!rawHeaders)
-	{
-		return headers;
-	}
-
-	var headerPairs = rawHeaders.split('\u000d\u000a');
-	for (var i = headerPairs.length; i--; )
-	{
-		var headerPair = headerPairs[i];
-		var index = headerPair.indexOf('\u003a\u0020');
-		if (index > 0)
-		{
-			var key = headerPair.substring(0, index);
-			var value = headerPair.substring(index + 2);
-
-			headers = A3(_elm_lang$core$Dict$update, key, function(oldValue) {
-				if (oldValue.ctor === 'Just')
-				{
-					return _elm_lang$core$Maybe$Just(value + ', ' + oldValue._0);
-				}
-				return _elm_lang$core$Maybe$Just(value);
-			}, headers);
-		}
-	}
-
-	return headers;
-}
-
-
-// EXPECTORS
-
-function expectStringResponse(responseToResult)
-{
-	return {
-		responseType: 'text',
-		responseToResult: responseToResult
-	};
-}
-
-function mapExpect(func, expect)
-{
-	return {
-		responseType: expect.responseType,
-		responseToResult: function(response) {
-			var convertedResponse = expect.responseToResult(response);
-			return A2(_elm_lang$core$Result$map, func, convertedResponse);
-		}
-	};
-}
-
-
-// BODY
-
-function multipart(parts)
-{
-	var formData = new FormData();
-
-	while (parts.ctor !== '[]')
-	{
-		var part = parts._0;
-		formData.append(part._0, part._1);
-		parts = parts._1;
-	}
-
-	return { ctor: 'FormDataBody', _0: formData };
-}
-
-return {
-	toTask: F2(toTask),
-	expectStringResponse: expectStringResponse,
-	mapExpect: F2(mapExpect),
-	multipart: multipart,
-	encodeUri: encodeUri,
-	decodeUri: decodeUri
-};
-
-}();
-var _elm_lang$http$Http_Internal$map = F2(
-	function (func, request) {
-		return _elm_lang$core$Native_Utils.update(
-			request,
-			{
-				expect: A2(_elm_lang$http$Native_Http.mapExpect, func, request.expect)
-			});
-	});
-var _elm_lang$http$Http_Internal$RawRequest = F7(
-	function (a, b, c, d, e, f, g) {
-		return {method: a, headers: b, url: c, body: d, expect: e, timeout: f, withCredentials: g};
-	});
-var _elm_lang$http$Http_Internal$Request = function (a) {
-	return {ctor: 'Request', _0: a};
-};
-var _elm_lang$http$Http_Internal$Expect = {ctor: 'Expect'};
-var _elm_lang$http$Http_Internal$FormDataBody = {ctor: 'FormDataBody'};
-var _elm_lang$http$Http_Internal$StringBody = F2(
+var _bitamar$magnetic$App_Model$serverUrl = 'wss://echoboard.itu.sh/';
+var _bitamar$magnetic$App_Model$emptyModel = {magnets: _elm_lang$core$Dict$empty, dragging: false};
+var _bitamar$magnetic$App_Model$Model = F2(
 	function (a, b) {
-		return {ctor: 'StringBody', _0: a, _1: b};
+		return {magnets: a, dragging: b};
 	});
-var _elm_lang$http$Http_Internal$EmptyBody = {ctor: 'EmptyBody'};
-var _elm_lang$http$Http_Internal$Header = F2(
-	function (a, b) {
-		return {ctor: 'Header', _0: a, _1: b};
-	});
-var _elm_lang$http$Http$decodeUri = _elm_lang$http$Native_Http.decodeUri;
-var _elm_lang$http$Http$encodeUri = _elm_lang$http$Native_Http.encodeUri;
-var _elm_lang$http$Http$expectStringResponse = _elm_lang$http$Native_Http.expectStringResponse;
-var _elm_lang$http$Http$expectJson = function (decoder) {
-	return _elm_lang$http$Http$expectStringResponse(
-		function (response) {
-			return A2(_elm_lang$core$Json_Decode$decodeString, decoder, response.body);
-		});
+var _bitamar$magnetic$App_Model$SingleMove = function (a) {
+	return {ctor: 'SingleMove', _0: a};
 };
-var _elm_lang$http$Http$expectString = _elm_lang$http$Http$expectStringResponse(
-	function (response) {
-		return _elm_lang$core$Result$Ok(response.body);
-	});
-var _elm_lang$http$Http$multipartBody = _elm_lang$http$Native_Http.multipart;
-var _elm_lang$http$Http$stringBody = _elm_lang$http$Http_Internal$StringBody;
-var _elm_lang$http$Http$jsonBody = function (value) {
-	return A2(
-		_elm_lang$http$Http_Internal$StringBody,
-		'application/json',
-		A2(_elm_lang$core$Json_Encode$encode, 0, value));
+var _bitamar$magnetic$App_Model$AllMagnets = function (a) {
+	return {ctor: 'AllMagnets', _0: a};
 };
-var _elm_lang$http$Http$emptyBody = _elm_lang$http$Http_Internal$EmptyBody;
-var _elm_lang$http$Http$header = _elm_lang$http$Http_Internal$Header;
-var _elm_lang$http$Http$request = _elm_lang$http$Http_Internal$Request;
-var _elm_lang$http$Http$post = F3(
-	function (url, body, decoder) {
-		return _elm_lang$http$Http$request(
-			{
-				method: 'POST',
-				headers: {ctor: '[]'},
-				url: url,
-				body: body,
-				expect: _elm_lang$http$Http$expectJson(decoder),
-				timeout: _elm_lang$core$Maybe$Nothing,
-				withCredentials: false
-			});
-	});
-var _elm_lang$http$Http$get = F2(
-	function (url, decoder) {
-		return _elm_lang$http$Http$request(
-			{
-				method: 'GET',
-				headers: {ctor: '[]'},
-				url: url,
-				body: _elm_lang$http$Http$emptyBody,
-				expect: _elm_lang$http$Http$expectJson(decoder),
-				timeout: _elm_lang$core$Maybe$Nothing,
-				withCredentials: false
-			});
-	});
-var _elm_lang$http$Http$getString = function (url) {
-	return _elm_lang$http$Http$request(
-		{
-			method: 'GET',
-			headers: {ctor: '[]'},
-			url: url,
-			body: _elm_lang$http$Http$emptyBody,
-			expect: _elm_lang$http$Http$expectString,
-			timeout: _elm_lang$core$Maybe$Nothing,
-			withCredentials: false
-		});
-};
-var _elm_lang$http$Http$toTask = function (_p0) {
-	var _p1 = _p0;
-	return A2(_elm_lang$http$Native_Http.toTask, _p1._0, _elm_lang$core$Maybe$Nothing);
-};
-var _elm_lang$http$Http$send = F2(
-	function (resultToMessage, request) {
-		return A2(
-			_elm_lang$core$Task$attempt,
-			resultToMessage,
-			_elm_lang$http$Http$toTask(request));
-	});
-var _elm_lang$http$Http$Response = F4(
-	function (a, b, c, d) {
-		return {url: a, status: b, headers: c, body: d};
-	});
-var _elm_lang$http$Http$BadPayload = F2(
-	function (a, b) {
-		return {ctor: 'BadPayload', _0: a, _1: b};
-	});
-var _elm_lang$http$Http$BadStatus = function (a) {
-	return {ctor: 'BadStatus', _0: a};
-};
-var _elm_lang$http$Http$NetworkError = {ctor: 'NetworkError'};
-var _elm_lang$http$Http$Timeout = {ctor: 'Timeout'};
-var _elm_lang$http$Http$BadUrl = function (a) {
-	return {ctor: 'BadUrl', _0: a};
-};
-var _elm_lang$http$Http$StringPart = F2(
-	function (a, b) {
-		return {ctor: 'StringPart', _0: a, _1: b};
-	});
-var _elm_lang$http$Http$stringPart = _elm_lang$http$Http$StringPart;
-var _bitamar$magnetic$Http_Update$decodePosition = A3(
+var _bitamar$magnetic$Magnet_Utils$decodePosition = A3(
 	_elm_lang$core$Json_Decode$map2,
 	_elm_lang$mouse$Mouse$Position,
 	A2(_elm_lang$core$Json_Decode$field, 'x', _elm_lang$core$Json_Decode$int),
 	A2(_elm_lang$core$Json_Decode$field, 'y', _elm_lang$core$Json_Decode$int));
-var _bitamar$magnetic$Http_Update$decodeSide = function (_p0) {
+var _bitamar$magnetic$Magnet_Utils$decodeSide = function (_p0) {
 	return _elm_lang$core$Json_Decode$succeed(_bitamar$magnetic$Magnet_Model$Left);
 };
-var _bitamar$magnetic$Http_Update$decodeDrag = A5(
+var _bitamar$magnetic$Magnet_Utils$decodeDrag = A5(
 	_elm_lang$core$Json_Decode$map4,
 	_bitamar$magnetic$Magnet_Model$Drag,
-	A2(_elm_lang$core$Json_Decode$field, 'current', _bitamar$magnetic$Http_Update$decodePosition),
-	A2(_elm_lang$core$Json_Decode$field, 'start', _bitamar$magnetic$Http_Update$decodePosition),
+	A2(_elm_lang$core$Json_Decode$field, 'current', _bitamar$magnetic$Magnet_Utils$decodePosition),
+	A2(_elm_lang$core$Json_Decode$field, 'start', _bitamar$magnetic$Magnet_Utils$decodePosition),
 	A2(_elm_lang$core$Json_Decode$field, 'distanceFromCenter', _elm_lang$core$Json_Decode$float),
 	A2(
 		_elm_lang$core$Json_Decode$andThen,
-		_bitamar$magnetic$Http_Update$decodeSide,
+		_bitamar$magnetic$Magnet_Utils$decodeSide,
 		A2(_elm_lang$core$Json_Decode$field, 'side', _elm_lang$core$Json_Decode$string)));
-var _bitamar$magnetic$Http_Update$decodeMagnet = A6(
+var _bitamar$magnetic$Magnet_Utils$decodeMagnet = A6(
 	_elm_lang$core$Json_Decode$map5,
 	_bitamar$magnetic$Magnet_Model$Magnet,
 	A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$string),
 	A2(_elm_lang$core$Json_Decode$field, 'word', _elm_lang$core$Json_Decode$string),
-	A2(_elm_lang$core$Json_Decode$field, 'position', _bitamar$magnetic$Http_Update$decodePosition),
+	A2(_elm_lang$core$Json_Decode$field, 'position', _bitamar$magnetic$Magnet_Utils$decodePosition),
 	_elm_lang$core$Json_Decode$maybe(
-		A2(_elm_lang$core$Json_Decode$field, 'drag', _bitamar$magnetic$Http_Update$decodeDrag)),
+		A2(_elm_lang$core$Json_Decode$field, 'drag', _bitamar$magnetic$Magnet_Utils$decodeDrag)),
 	A2(_elm_lang$core$Json_Decode$field, 'rotation', _elm_lang$core$Json_Decode$float));
-var _bitamar$magnetic$Http_Update$decodeMagnets = _elm_lang$core$Json_Decode$dict(_bitamar$magnetic$Http_Update$decodeMagnet);
-var _bitamar$magnetic$Http_Update$update = F2(
-	function (msg, model) {
-		var _p1 = msg;
-		var _p2 = _p1._0;
-		if (_p2.ctor === 'Ok') {
-			return {ctor: '_Tuple2', _0: _p2._0, _1: _elm_lang$core$Platform_Cmd$none};
-		} else {
-			return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+var _bitamar$magnetic$Magnet_Utils$decodeMagnets = _elm_lang$core$Json_Decode$dict(_bitamar$magnetic$Magnet_Utils$decodeMagnet);
+var _bitamar$magnetic$Magnet_Utils$decodeMove = A5(
+	_elm_lang$core$Json_Decode$map4,
+	_bitamar$magnetic$Magnet_Model$Move,
+	A2(_elm_lang$core$Json_Decode$field, 'i', _elm_lang$core$Json_Decode$string),
+	A2(_elm_lang$core$Json_Decode$field, 'x', _elm_lang$core$Json_Decode$int),
+	A2(_elm_lang$core$Json_Decode$field, 'y', _elm_lang$core$Json_Decode$int),
+	A2(_elm_lang$core$Json_Decode$field, 'r', _elm_lang$core$Json_Decode$float));
+var _bitamar$magnetic$Magnet_Utils$encodeMove = function (magnet) {
+	return _elm_lang$core$Json_Encode$object(
+		{
+			ctor: '::',
+			_0: {
+				ctor: '_Tuple2',
+				_0: 'i',
+				_1: _elm_lang$core$Json_Encode$string(magnet.id)
+			},
+			_1: {
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'x',
+					_1: _elm_lang$core$Json_Encode$int(magnet.position.x)
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'y',
+						_1: _elm_lang$core$Json_Encode$int(magnet.position.y)
+					},
+					_1: {
+						ctor: '::',
+						_0: {
+							ctor: '_Tuple2',
+							_0: 'r',
+							_1: _elm_lang$core$Json_Encode$float(magnet.rotation)
+						},
+						_1: {ctor: '[]'}
+					}
+				}
+			}
+		});
+};
+var _bitamar$magnetic$Magnet_Utils$encodePosition = function (position) {
+	return _elm_lang$core$Json_Encode$object(
+		{ctor: '[]'});
+};
+var _bitamar$magnetic$Magnet_Utils$decodeAllMagnnetsMessage = A2(_elm_lang$core$Json_Decode$map, _bitamar$magnetic$App_Model$AllMagnets, _bitamar$magnetic$Magnet_Utils$decodeMagnets);
+var _bitamar$magnetic$Magnet_Utils$decodeSingleMoveMessage = A2(_elm_lang$core$Json_Decode$map, _bitamar$magnetic$App_Model$SingleMove, _bitamar$magnetic$Magnet_Utils$decodeMove);
+var _bitamar$magnetic$Magnet_Utils$decodeMessage = _elm_lang$core$Json_Decode$oneOf(
+	{
+		ctor: '::',
+		_0: _bitamar$magnetic$Magnet_Utils$decodeSingleMoveMessage,
+		_1: {
+			ctor: '::',
+			_0: _bitamar$magnetic$Magnet_Utils$decodeAllMagnnetsMessage,
+			_1: {ctor: '[]'}
 		}
 	});
-var _bitamar$magnetic$Http_Update$GotMagnets = function (a) {
-	return {ctor: 'GotMagnets', _0: a};
-};
-var _bitamar$magnetic$Http_Update$getMagnets = function () {
-	var url = 'https://peaceful-refuge.herokuapp.com/';
-	return A2(
-		_elm_lang$http$Http$send,
-		_bitamar$magnetic$Http_Update$GotMagnets,
-		A2(_elm_lang$http$Http$get, url, _bitamar$magnetic$Http_Update$decodeMagnets));
-}();
 var _bitamar$magnetic$Magnet_Utils$setDragAt = F2(
-	function (_p0, position_) {
-		var _p1 = _p0;
-		var _p6 = _p1.drag;
+	function (_p1, position_) {
+		var _p2 = _p1;
+		var _p7 = _p2.drag;
 		var rotationDelta = function () {
-			var _p2 = _p6;
-			if (_p2.ctor === 'Just') {
+			var _p3 = _p7;
+			if (_p3.ctor === 'Just') {
 				var sideFactor = function () {
-					var _p3 = _p2._0.side;
-					if (_p3.ctor === 'Left') {
+					var _p4 = _p3._0.side;
+					if (_p4.ctor === 'Left') {
 						return -1;
 					} else {
 						return 1;
 					}
 				}();
-				return ((_elm_lang$core$Basics$toFloat(position_.y - _p2._0.current.y) * sideFactor) * _p2._0.distanceFromCenter) / 100;
+				return ((_elm_lang$core$Basics$toFloat(position_.y - _p3._0.current.y) * sideFactor) * _p3._0.distanceFromCenter) / 100;
 			} else {
 				return 1;
 			}
 		}();
-		var rotation_ = _p1.rotation + rotationDelta;
+		var rotation_ = _p2.rotation + rotationDelta;
 		return A5(
 			_bitamar$magnetic$Magnet_Model$Magnet,
-			_p1.id,
-			_p1.word,
-			_p1.position,
+			_p2.id,
+			_p2.word,
+			_p2.position,
 			A2(
 				_elm_lang$core$Maybe$map,
-				function (_p4) {
-					var _p5 = _p4;
-					return A4(_bitamar$magnetic$Magnet_Model$Drag, _p5.start, position_, _p5.distanceFromCenter, _p5.side);
+				function (_p5) {
+					var _p6 = _p5;
+					return A4(_bitamar$magnetic$Magnet_Model$Drag, _p6.start, position_, _p6.distanceFromCenter, _p6.side);
 				},
-				_p6),
+				_p7),
 			rotation_);
 	});
 var _bitamar$magnetic$Magnet_Utils$setDragStart = F2(
-	function (_p7, position_) {
-		var _p8 = _p7;
-		var _p10 = _p8.position;
-		var distanceFromMagnetCenter = function (_p9) {
+	function (_p8, position_) {
+		var _p9 = _p8;
+		var _p11 = _p9.position;
+		var distanceFromMagnetCenter = function (_p10) {
 			return _elm_lang$core$Basics$sqrt(
-				_elm_lang$core$Basics$toFloat(_p9));
+				_elm_lang$core$Basics$toFloat(_p10));
 		}(
-			Math.pow(_p10.x - position_.x, 2) + Math.pow(_p10.y - position_.y, 2));
-		var side = (_elm_lang$core$Native_Utils.cmp(position_.x, _p10.x) < 0) ? _bitamar$magnetic$Magnet_Model$Left : _bitamar$magnetic$Magnet_Model$Right;
+			Math.pow(_p11.x - position_.x, 2) + Math.pow(_p11.y - position_.y, 2));
+		var side = (_elm_lang$core$Native_Utils.cmp(position_.x, _p11.x) < 0) ? _bitamar$magnetic$Magnet_Model$Left : _bitamar$magnetic$Magnet_Model$Right;
 		return A5(
 			_bitamar$magnetic$Magnet_Model$Magnet,
-			_p8.id,
-			_p8.word,
-			_p10,
+			_p9.id,
+			_p9.word,
+			_p11,
 			_elm_lang$core$Maybe$Just(
 				A4(_bitamar$magnetic$Magnet_Model$Drag, position_, position_, distanceFromMagnetCenter, side)),
-			_p8.rotation);
+			_p9.rotation);
 	});
-var _bitamar$magnetic$Magnet_Utils$getPosition = function (_p11) {
-	var _p12 = _p11;
-	var _p16 = _p12.position;
-	var _p13 = _p12.drag;
-	if (_p13.ctor === 'Nothing') {
-		return _p16;
+var _bitamar$magnetic$Magnet_Utils$getPosition = function (_p12) {
+	var _p13 = _p12;
+	var _p17 = _p13.position;
+	var _p14 = _p13.drag;
+	if (_p14.ctor === 'Nothing') {
+		return _p17;
 	} else {
-		var _p15 = _p13._0.start;
-		var _p14 = _p13._0.current;
-		return A2(_elm_lang$mouse$Mouse$Position, (_p16.x + _p14.x) - _p15.x, (_p16.y + _p14.y) - _p15.y);
+		var _p16 = _p14._0.start;
+		var _p15 = _p14._0.current;
+		return A2(_elm_lang$mouse$Mouse$Position, (_p17.x + _p15.x) - _p16.x, (_p17.y + _p15.y) - _p16.y);
 	}
 };
-var _bitamar$magnetic$Magnet_Utils$setDragEnd = function (_p17) {
-	var _p18 = _p17;
+var _bitamar$magnetic$Magnet_Utils$setDragEnd = function (_p18) {
+	var _p19 = _p18;
 	return A5(
 		_bitamar$magnetic$Magnet_Model$Magnet,
-		_p18.id,
-		_p18.word,
-		_bitamar$magnetic$Magnet_Utils$getPosition(_p18),
+		_p19.id,
+		_p19.word,
+		_bitamar$magnetic$Magnet_Utils$getPosition(_p19),
 		_elm_lang$core$Maybe$Nothing,
-		_p18.rotation);
+		_p19.rotation);
 };
-var _bitamar$magnetic$Magnet_Update$getDraggedMagnet = function (model) {
+var _elm_lang$websocket$Native_WebSocket = function() {
+
+function open(url, settings)
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+	{
+		try
+		{
+			var socket = new WebSocket(url);
+			socket.elm_web_socket = true;
+		}
+		catch(err)
+		{
+			return callback(_elm_lang$core$Native_Scheduler.fail({
+				ctor: err.name === 'SecurityError' ? 'BadSecurity' : 'BadArgs',
+				_0: err.message
+			}));
+		}
+
+		socket.addEventListener("open", function(event) {
+			callback(_elm_lang$core$Native_Scheduler.succeed(socket));
+		});
+
+		socket.addEventListener("message", function(event) {
+			_elm_lang$core$Native_Scheduler.rawSpawn(A2(settings.onMessage, socket, event.data));
+		});
+
+		socket.addEventListener("close", function(event) {
+			_elm_lang$core$Native_Scheduler.rawSpawn(settings.onClose({
+				code: event.code,
+				reason: event.reason,
+				wasClean: event.wasClean
+			}));
+		});
+
+		return function()
+		{
+			if (socket && socket.close)
+			{
+				socket.close();
+			}
+		};
+	});
+}
+
+function send(socket, string)
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+	{
+		var result =
+			socket.readyState === WebSocket.OPEN
+				? _elm_lang$core$Maybe$Nothing
+				: _elm_lang$core$Maybe$Just({ ctor: 'NotOpen' });
+
+		try
+		{
+			socket.send(string);
+		}
+		catch(err)
+		{
+			result = _elm_lang$core$Maybe$Just({ ctor: 'BadString' });
+		}
+
+		callback(_elm_lang$core$Native_Scheduler.succeed(result));
+	});
+}
+
+function close(code, reason, socket)
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback) {
+		try
+		{
+			socket.close(code, reason);
+		}
+		catch(err)
+		{
+			return callback(_elm_lang$core$Native_Scheduler.fail(_elm_lang$core$Maybe$Just({
+				ctor: err.name === 'SyntaxError' ? 'BadReason' : 'BadCode'
+			})));
+		}
+		callback(_elm_lang$core$Native_Scheduler.succeed(_elm_lang$core$Maybe$Nothing));
+	});
+}
+
+function bytesQueued(socket)
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback) {
+		callback(_elm_lang$core$Native_Scheduler.succeed(socket.bufferedAmount));
+	});
+}
+
+return {
+	open: F2(open),
+	send: F2(send),
+	close: F3(close),
+	bytesQueued: bytesQueued
+};
+
+}();
+var _elm_lang$websocket$WebSocket_LowLevel$bytesQueued = _elm_lang$websocket$Native_WebSocket.bytesQueued;
+var _elm_lang$websocket$WebSocket_LowLevel$send = _elm_lang$websocket$Native_WebSocket.send;
+var _elm_lang$websocket$WebSocket_LowLevel$closeWith = _elm_lang$websocket$Native_WebSocket.close;
+var _elm_lang$websocket$WebSocket_LowLevel$close = function (socket) {
+	return A2(
+		_elm_lang$core$Task$map,
+		_elm_lang$core$Basics$always(
+			{ctor: '_Tuple0'}),
+		A3(_elm_lang$websocket$WebSocket_LowLevel$closeWith, 1000, '', socket));
+};
+var _elm_lang$websocket$WebSocket_LowLevel$open = _elm_lang$websocket$Native_WebSocket.open;
+var _elm_lang$websocket$WebSocket_LowLevel$Settings = F2(
+	function (a, b) {
+		return {onMessage: a, onClose: b};
+	});
+var _elm_lang$websocket$WebSocket_LowLevel$WebSocket = {ctor: 'WebSocket'};
+var _elm_lang$websocket$WebSocket_LowLevel$BadArgs = {ctor: 'BadArgs'};
+var _elm_lang$websocket$WebSocket_LowLevel$BadSecurity = {ctor: 'BadSecurity'};
+var _elm_lang$websocket$WebSocket_LowLevel$BadReason = {ctor: 'BadReason'};
+var _elm_lang$websocket$WebSocket_LowLevel$BadCode = {ctor: 'BadCode'};
+var _elm_lang$websocket$WebSocket_LowLevel$BadString = {ctor: 'BadString'};
+var _elm_lang$websocket$WebSocket_LowLevel$NotOpen = {ctor: 'NotOpen'};
+var _elm_lang$websocket$WebSocket$closeConnection = function (connection) {
+	var _p0 = connection;
+	if (_p0.ctor === 'Opening') {
+		return _elm_lang$core$Process$kill(_p0._1);
+	} else {
+		return _elm_lang$websocket$WebSocket_LowLevel$close(_p0._0);
+	}
+};
+var _elm_lang$websocket$WebSocket$after = function (backoff) {
+	return (_elm_lang$core$Native_Utils.cmp(backoff, 1) < 0) ? _elm_lang$core$Task$succeed(
+		{ctor: '_Tuple0'}) : _elm_lang$core$Process$sleep(
+		_elm_lang$core$Basics$toFloat(
+			10 * Math.pow(2, backoff)));
+};
+var _elm_lang$websocket$WebSocket$removeQueue = F2(
+	function (name, state) {
+		return _elm_lang$core$Native_Utils.update(
+			state,
+			{
+				queues: A2(_elm_lang$core$Dict$remove, name, state.queues)
+			});
+	});
+var _elm_lang$websocket$WebSocket$updateSocket = F3(
+	function (name, connection, state) {
+		return _elm_lang$core$Native_Utils.update(
+			state,
+			{
+				sockets: A3(_elm_lang$core$Dict$insert, name, connection, state.sockets)
+			});
+	});
+var _elm_lang$websocket$WebSocket$add = F2(
+	function (value, maybeList) {
+		var _p1 = maybeList;
+		if (_p1.ctor === 'Nothing') {
+			return _elm_lang$core$Maybe$Just(
+				{
+					ctor: '::',
+					_0: value,
+					_1: {ctor: '[]'}
+				});
+		} else {
+			return _elm_lang$core$Maybe$Just(
+				{ctor: '::', _0: value, _1: _p1._0});
+		}
+	});
+var _elm_lang$websocket$WebSocket$buildSubDict = F2(
+	function (subs, dict) {
+		buildSubDict:
+		while (true) {
+			var _p2 = subs;
+			if (_p2.ctor === '[]') {
+				return dict;
+			} else {
+				if (_p2._0.ctor === 'Listen') {
+					var _v3 = _p2._1,
+						_v4 = A3(
+						_elm_lang$core$Dict$update,
+						_p2._0._0,
+						_elm_lang$websocket$WebSocket$add(_p2._0._1),
+						dict);
+					subs = _v3;
+					dict = _v4;
+					continue buildSubDict;
+				} else {
+					var _v5 = _p2._1,
+						_v6 = A3(
+						_elm_lang$core$Dict$update,
+						_p2._0._0,
+						function (_p3) {
+							return _elm_lang$core$Maybe$Just(
+								A2(
+									_elm_lang$core$Maybe$withDefault,
+									{ctor: '[]'},
+									_p3));
+						},
+						dict);
+					subs = _v5;
+					dict = _v6;
+					continue buildSubDict;
+				}
+			}
+		}
+	});
+var _elm_lang$websocket$WebSocket_ops = _elm_lang$websocket$WebSocket_ops || {};
+_elm_lang$websocket$WebSocket_ops['&>'] = F2(
+	function (t1, t2) {
+		return A2(
+			_elm_lang$core$Task$andThen,
+			function (_p4) {
+				return t2;
+			},
+			t1);
+	});
+var _elm_lang$websocket$WebSocket$sendMessagesHelp = F3(
+	function (cmds, socketsDict, queuesDict) {
+		sendMessagesHelp:
+		while (true) {
+			var _p5 = cmds;
+			if (_p5.ctor === '[]') {
+				return _elm_lang$core$Task$succeed(queuesDict);
+			} else {
+				var _p9 = _p5._1;
+				var _p8 = _p5._0._0;
+				var _p7 = _p5._0._1;
+				var _p6 = A2(_elm_lang$core$Dict$get, _p8, socketsDict);
+				if ((_p6.ctor === 'Just') && (_p6._0.ctor === 'Connected')) {
+					return A2(
+						_elm_lang$websocket$WebSocket_ops['&>'],
+						A2(_elm_lang$websocket$WebSocket_LowLevel$send, _p6._0._0, _p7),
+						A3(_elm_lang$websocket$WebSocket$sendMessagesHelp, _p9, socketsDict, queuesDict));
+				} else {
+					var _v9 = _p9,
+						_v10 = socketsDict,
+						_v11 = A3(
+						_elm_lang$core$Dict$update,
+						_p8,
+						_elm_lang$websocket$WebSocket$add(_p7),
+						queuesDict);
+					cmds = _v9;
+					socketsDict = _v10;
+					queuesDict = _v11;
+					continue sendMessagesHelp;
+				}
+			}
+		}
+	});
+var _elm_lang$websocket$WebSocket$subscription = _elm_lang$core$Native_Platform.leaf('WebSocket');
+var _elm_lang$websocket$WebSocket$command = _elm_lang$core$Native_Platform.leaf('WebSocket');
+var _elm_lang$websocket$WebSocket$State = F3(
+	function (a, b, c) {
+		return {sockets: a, queues: b, subs: c};
+	});
+var _elm_lang$websocket$WebSocket$init = _elm_lang$core$Task$succeed(
+	A3(_elm_lang$websocket$WebSocket$State, _elm_lang$core$Dict$empty, _elm_lang$core$Dict$empty, _elm_lang$core$Dict$empty));
+var _elm_lang$websocket$WebSocket$Send = F2(
+	function (a, b) {
+		return {ctor: 'Send', _0: a, _1: b};
+	});
+var _elm_lang$websocket$WebSocket$send = F2(
+	function (url, message) {
+		return _elm_lang$websocket$WebSocket$command(
+			A2(_elm_lang$websocket$WebSocket$Send, url, message));
+	});
+var _elm_lang$websocket$WebSocket$cmdMap = F2(
+	function (_p11, _p10) {
+		var _p12 = _p10;
+		return A2(_elm_lang$websocket$WebSocket$Send, _p12._0, _p12._1);
+	});
+var _elm_lang$websocket$WebSocket$KeepAlive = function (a) {
+	return {ctor: 'KeepAlive', _0: a};
+};
+var _elm_lang$websocket$WebSocket$keepAlive = function (url) {
+	return _elm_lang$websocket$WebSocket$subscription(
+		_elm_lang$websocket$WebSocket$KeepAlive(url));
+};
+var _elm_lang$websocket$WebSocket$Listen = F2(
+	function (a, b) {
+		return {ctor: 'Listen', _0: a, _1: b};
+	});
+var _elm_lang$websocket$WebSocket$listen = F2(
+	function (url, tagger) {
+		return _elm_lang$websocket$WebSocket$subscription(
+			A2(_elm_lang$websocket$WebSocket$Listen, url, tagger));
+	});
+var _elm_lang$websocket$WebSocket$subMap = F2(
+	function (func, sub) {
+		var _p13 = sub;
+		if (_p13.ctor === 'Listen') {
+			return A2(
+				_elm_lang$websocket$WebSocket$Listen,
+				_p13._0,
+				function (_p14) {
+					return func(
+						_p13._1(_p14));
+				});
+		} else {
+			return _elm_lang$websocket$WebSocket$KeepAlive(_p13._0);
+		}
+	});
+var _elm_lang$websocket$WebSocket$Connected = function (a) {
+	return {ctor: 'Connected', _0: a};
+};
+var _elm_lang$websocket$WebSocket$Opening = F2(
+	function (a, b) {
+		return {ctor: 'Opening', _0: a, _1: b};
+	});
+var _elm_lang$websocket$WebSocket$BadOpen = function (a) {
+	return {ctor: 'BadOpen', _0: a};
+};
+var _elm_lang$websocket$WebSocket$GoodOpen = F2(
+	function (a, b) {
+		return {ctor: 'GoodOpen', _0: a, _1: b};
+	});
+var _elm_lang$websocket$WebSocket$Die = function (a) {
+	return {ctor: 'Die', _0: a};
+};
+var _elm_lang$websocket$WebSocket$Receive = F2(
+	function (a, b) {
+		return {ctor: 'Receive', _0: a, _1: b};
+	});
+var _elm_lang$websocket$WebSocket$open = F2(
+	function (name, router) {
+		return A2(
+			_elm_lang$websocket$WebSocket_LowLevel$open,
+			name,
+			{
+				onMessage: F2(
+					function (_p15, msg) {
+						return A2(
+							_elm_lang$core$Platform$sendToSelf,
+							router,
+							A2(_elm_lang$websocket$WebSocket$Receive, name, msg));
+					}),
+				onClose: function (details) {
+					return A2(
+						_elm_lang$core$Platform$sendToSelf,
+						router,
+						_elm_lang$websocket$WebSocket$Die(name));
+				}
+			});
+	});
+var _elm_lang$websocket$WebSocket$attemptOpen = F3(
+	function (router, backoff, name) {
+		var badOpen = function (_p16) {
+			return A2(
+				_elm_lang$core$Platform$sendToSelf,
+				router,
+				_elm_lang$websocket$WebSocket$BadOpen(name));
+		};
+		var goodOpen = function (ws) {
+			return A2(
+				_elm_lang$core$Platform$sendToSelf,
+				router,
+				A2(_elm_lang$websocket$WebSocket$GoodOpen, name, ws));
+		};
+		var actuallyAttemptOpen = A2(
+			_elm_lang$core$Task$onError,
+			badOpen,
+			A2(
+				_elm_lang$core$Task$andThen,
+				goodOpen,
+				A2(_elm_lang$websocket$WebSocket$open, name, router)));
+		return _elm_lang$core$Process$spawn(
+			A2(
+				_elm_lang$websocket$WebSocket_ops['&>'],
+				_elm_lang$websocket$WebSocket$after(backoff),
+				actuallyAttemptOpen));
+	});
+var _elm_lang$websocket$WebSocket$onEffects = F4(
+	function (router, cmds, subs, state) {
+		var newSubs = A2(_elm_lang$websocket$WebSocket$buildSubDict, subs, _elm_lang$core$Dict$empty);
+		var cleanup = function (newQueues) {
+			var rightStep = F3(
+				function (name, connection, getNewSockets) {
+					return A2(
+						_elm_lang$websocket$WebSocket_ops['&>'],
+						_elm_lang$websocket$WebSocket$closeConnection(connection),
+						getNewSockets);
+				});
+			var bothStep = F4(
+				function (name, _p17, connection, getNewSockets) {
+					return A2(
+						_elm_lang$core$Task$map,
+						A2(_elm_lang$core$Dict$insert, name, connection),
+						getNewSockets);
+				});
+			var leftStep = F3(
+				function (name, _p18, getNewSockets) {
+					return A2(
+						_elm_lang$core$Task$andThen,
+						function (newSockets) {
+							return A2(
+								_elm_lang$core$Task$andThen,
+								function (pid) {
+									return _elm_lang$core$Task$succeed(
+										A3(
+											_elm_lang$core$Dict$insert,
+											name,
+											A2(_elm_lang$websocket$WebSocket$Opening, 0, pid),
+											newSockets));
+								},
+								A3(_elm_lang$websocket$WebSocket$attemptOpen, router, 0, name));
+						},
+						getNewSockets);
+				});
+			var newEntries = A2(
+				_elm_lang$core$Dict$union,
+				newQueues,
+				A2(
+					_elm_lang$core$Dict$map,
+					F2(
+						function (k, v) {
+							return {ctor: '[]'};
+						}),
+					newSubs));
+			var collectNewSockets = A6(
+				_elm_lang$core$Dict$merge,
+				leftStep,
+				bothStep,
+				rightStep,
+				newEntries,
+				state.sockets,
+				_elm_lang$core$Task$succeed(_elm_lang$core$Dict$empty));
+			return A2(
+				_elm_lang$core$Task$andThen,
+				function (newSockets) {
+					return _elm_lang$core$Task$succeed(
+						A3(_elm_lang$websocket$WebSocket$State, newSockets, newQueues, newSubs));
+				},
+				collectNewSockets);
+		};
+		var sendMessagesGetNewQueues = A3(_elm_lang$websocket$WebSocket$sendMessagesHelp, cmds, state.sockets, state.queues);
+		return A2(_elm_lang$core$Task$andThen, cleanup, sendMessagesGetNewQueues);
+	});
+var _elm_lang$websocket$WebSocket$onSelfMsg = F3(
+	function (router, selfMsg, state) {
+		var _p19 = selfMsg;
+		switch (_p19.ctor) {
+			case 'Receive':
+				var sends = A2(
+					_elm_lang$core$List$map,
+					function (tagger) {
+						return A2(
+							_elm_lang$core$Platform$sendToApp,
+							router,
+							tagger(_p19._1));
+					},
+					A2(
+						_elm_lang$core$Maybe$withDefault,
+						{ctor: '[]'},
+						A2(_elm_lang$core$Dict$get, _p19._0, state.subs)));
+				return A2(
+					_elm_lang$websocket$WebSocket_ops['&>'],
+					_elm_lang$core$Task$sequence(sends),
+					_elm_lang$core$Task$succeed(state));
+			case 'Die':
+				var _p21 = _p19._0;
+				var _p20 = A2(_elm_lang$core$Dict$get, _p21, state.sockets);
+				if (_p20.ctor === 'Nothing') {
+					return _elm_lang$core$Task$succeed(state);
+				} else {
+					return A2(
+						_elm_lang$core$Task$andThen,
+						function (pid) {
+							return _elm_lang$core$Task$succeed(
+								A3(
+									_elm_lang$websocket$WebSocket$updateSocket,
+									_p21,
+									A2(_elm_lang$websocket$WebSocket$Opening, 0, pid),
+									state));
+						},
+						A3(_elm_lang$websocket$WebSocket$attemptOpen, router, 0, _p21));
+				}
+			case 'GoodOpen':
+				var _p24 = _p19._1;
+				var _p23 = _p19._0;
+				var _p22 = A2(_elm_lang$core$Dict$get, _p23, state.queues);
+				if (_p22.ctor === 'Nothing') {
+					return _elm_lang$core$Task$succeed(
+						A3(
+							_elm_lang$websocket$WebSocket$updateSocket,
+							_p23,
+							_elm_lang$websocket$WebSocket$Connected(_p24),
+							state));
+				} else {
+					return A3(
+						_elm_lang$core$List$foldl,
+						F2(
+							function (msg, task) {
+								return A2(
+									_elm_lang$websocket$WebSocket_ops['&>'],
+									A2(_elm_lang$websocket$WebSocket_LowLevel$send, _p24, msg),
+									task);
+							}),
+						_elm_lang$core$Task$succeed(
+							A2(
+								_elm_lang$websocket$WebSocket$removeQueue,
+								_p23,
+								A3(
+									_elm_lang$websocket$WebSocket$updateSocket,
+									_p23,
+									_elm_lang$websocket$WebSocket$Connected(_p24),
+									state))),
+						_p22._0);
+				}
+			default:
+				var _p27 = _p19._0;
+				var _p25 = A2(_elm_lang$core$Dict$get, _p27, state.sockets);
+				if (_p25.ctor === 'Nothing') {
+					return _elm_lang$core$Task$succeed(state);
+				} else {
+					if (_p25._0.ctor === 'Opening') {
+						var _p26 = _p25._0._0;
+						return A2(
+							_elm_lang$core$Task$andThen,
+							function (pid) {
+								return _elm_lang$core$Task$succeed(
+									A3(
+										_elm_lang$websocket$WebSocket$updateSocket,
+										_p27,
+										A2(_elm_lang$websocket$WebSocket$Opening, _p26 + 1, pid),
+										state));
+							},
+							A3(_elm_lang$websocket$WebSocket$attemptOpen, router, _p26 + 1, _p27));
+					} else {
+						return _elm_lang$core$Task$succeed(state);
+					}
+				}
+		}
+	});
+_elm_lang$core$Native_Platform.effectManagers['WebSocket'] = {pkg: 'elm-lang/websocket', init: _elm_lang$websocket$WebSocket$init, onEffects: _elm_lang$websocket$WebSocket$onEffects, onSelfMsg: _elm_lang$websocket$WebSocket$onSelfMsg, tag: 'fx', cmdMap: _elm_lang$websocket$WebSocket$cmdMap, subMap: _elm_lang$websocket$WebSocket$subMap};
+var _bitamar$magnetic$Magnet_Update$getDraggedMagnet = function (magnets) {
 	var isMagnetDragged = function (magnet) {
 		var _p0 = magnet.drag;
 		if (_p0.ctor === 'Just') {
@@ -7017,54 +7245,110 @@ var _bitamar$magnetic$Magnet_Update$getDraggedMagnet = function (model) {
 		A2(
 			_elm_lang$core$List$filter,
 			isMagnetDragged,
-			_elm_lang$core$Dict$values(model)));
+			_elm_lang$core$Dict$values(magnets)));
 };
+var _bitamar$magnetic$Magnet_Update$updateMagnetMove = F2(
+	function (magnets, move) {
+		var position = {x: move.x, y: move.y};
+		var applyMove = function (maybeMagnet) {
+			var _p1 = maybeMagnet;
+			if (_p1.ctor === 'Just') {
+				return _elm_lang$core$Maybe$Just(
+					_elm_lang$core$Native_Utils.update(
+						_p1._0,
+						{position: position, rotation: move.rotation}));
+			} else {
+				return _elm_lang$core$Maybe$Nothing;
+			}
+		};
+		return A3(_elm_lang$core$Dict$update, move.id, applyMove, magnets);
+	});
 var _bitamar$magnetic$Magnet_Update$updateMagnet = F2(
-	function (model, magnet) {
+	function (magnets, magnet) {
 		return A3(
 			_elm_lang$core$Dict$update,
 			magnet.id,
-			function (_p1) {
+			function (_p2) {
 				return _elm_lang$core$Maybe$Just(magnet);
 			},
-			model);
+			magnets);
 	});
 var _bitamar$magnetic$Magnet_Update$update = F2(
 	function (model, msg) {
-		var _p2 = msg;
-		switch (_p2.ctor) {
+		var magnets = model.magnets;
+		var _p3 = msg;
+		switch (_p3.ctor) {
 			case 'MouseMove':
-				var model_ = function () {
-					var _p3 = _bitamar$magnetic$Magnet_Update$getDraggedMagnet(model);
-					if (_p3.ctor === 'Nothing') {
-						return model;
-					} else {
-						return A2(
-							_bitamar$magnetic$Magnet_Update$updateMagnet,
+				var _p4 = _bitamar$magnetic$Magnet_Update$getDraggedMagnet(magnets);
+				if (_p4.ctor === 'Nothing') {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						model,
+						{ctor: '[]'});
+				} else {
+					var magnet_ = A2(_bitamar$magnetic$Magnet_Utils$setDragAt, _p4._0, _p3._0);
+					var magnet__ = _elm_lang$core$Native_Utils.update(
+						magnet_,
+						{
+							position: _bitamar$magnetic$Magnet_Utils$getPosition(magnet_)
+						});
+					var moveJson = A2(
+						_elm_lang$core$Json_Encode$encode,
+						0,
+						_bitamar$magnetic$Magnet_Utils$encodeMove(magnet__));
+					var magnets_ = A2(_bitamar$magnetic$Magnet_Update$updateMagnet, magnets, magnet_);
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						_elm_lang$core$Native_Utils.update(
 							model,
-							A2(_bitamar$magnetic$Magnet_Utils$setDragAt, _p3._0, _p2._0));
-					}
-				}();
-				return {ctor: '_Tuple2', _0: model_, _1: _elm_lang$core$Platform_Cmd$none};
+							{magnets: magnets_}),
+						{
+							ctor: '::',
+							_0: A2(_elm_lang$websocket$WebSocket$send, _bitamar$magnetic$App_Model$serverUrl, moveJson),
+							_1: {ctor: '[]'}
+						});
+				}
 			case 'MouseUp':
-				var model_ = function () {
-					var _p4 = _bitamar$magnetic$Magnet_Update$getDraggedMagnet(model);
-					if (_p4.ctor === 'Nothing') {
-						return model;
-					} else {
-						return A2(
-							_bitamar$magnetic$Magnet_Update$updateMagnet,
+				var _p5 = _bitamar$magnetic$Magnet_Update$getDraggedMagnet(magnets);
+				if (_p5.ctor === 'Nothing') {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						model,
+						{ctor: '[]'});
+				} else {
+					var magnets_ = A2(
+						_bitamar$magnetic$Magnet_Update$updateMagnet,
+						magnets,
+						_bitamar$magnetic$Magnet_Utils$setDragEnd(_p5._0));
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						_elm_lang$core$Native_Utils.update(
 							model,
-							_bitamar$magnetic$Magnet_Utils$setDragEnd(_p4._0));
-					}
-				}();
-				return {ctor: '_Tuple2', _0: model_, _1: _elm_lang$core$Platform_Cmd$none};
+							{magnets: magnets_, dragging: false}),
+						{ctor: '[]'});
+				}
+			case 'DragStart':
+				var magnet_ = A2(_bitamar$magnetic$Magnet_Utils$setDragStart, _p3._0, _p3._1);
+				var magnets_ = A2(_bitamar$magnetic$Magnet_Update$updateMagnet, magnets, magnet_);
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{magnets: magnets_, dragging: true}),
+					{ctor: '[]'});
 			default:
-				var magnet_ = A2(_bitamar$magnetic$Magnet_Utils$setDragStart, _p2._0, _p2._1);
-				var model_ = A2(_bitamar$magnetic$Magnet_Update$updateMagnet, model, magnet_);
-				return {ctor: '_Tuple2', _0: model_, _1: _elm_lang$core$Platform_Cmd$none};
+				var magnets_ = A2(_bitamar$magnetic$Magnet_Update$updateMagnetMove, magnets, _p3._0);
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{magnets: magnets_}),
+					{ctor: '[]'});
 		}
 	});
+var _bitamar$magnetic$Magnet_Update$IncomingMove = function (a) {
+	return {ctor: 'IncomingMove', _0: a};
+};
 var _bitamar$magnetic$Magnet_Update$MouseUp = function (a) {
 	return {ctor: 'MouseUp', _0: a};
 };
@@ -7075,15 +7359,25 @@ var _bitamar$magnetic$Magnet_Update$DragStart = F2(
 	function (a, b) {
 		return {ctor: 'DragStart', _0: a, _1: b};
 	});
+var _bitamar$magnetic$App_Update$init = A2(
+	_elm_lang$core$Platform_Cmd_ops['!'],
+	_bitamar$magnetic$App_Model$emptyModel,
+	{ctor: '[]'});
+var _bitamar$magnetic$App_Update$IncomingMessage = function (a) {
+	return {ctor: 'IncomingMessage', _0: a};
+};
 var _bitamar$magnetic$App_Update$MouseUp = function (a) {
 	return {ctor: 'MouseUp', _0: a};
 };
 var _bitamar$magnetic$App_Update$MouseMove = function (a) {
 	return {ctor: 'MouseMove', _0: a};
 };
-var _bitamar$magnetic$App_Update$subscriptions = function (_p0) {
-	return _elm_lang$core$Platform_Sub$batch(
-		{
+var _bitamar$magnetic$App_Update$subscriptions = function (model) {
+	var ws = A2(_elm_lang$websocket$WebSocket$listen, _bitamar$magnetic$App_Model$serverUrl, _bitamar$magnetic$App_Update$IncomingMessage);
+	var subs = model.dragging ? {
+		ctor: '::',
+		_0: ws,
+		_1: {
 			ctor: '::',
 			_0: _elm_lang$mouse$Mouse$moves(_bitamar$magnetic$App_Update$MouseMove),
 			_1: {
@@ -7091,34 +7385,47 @@ var _bitamar$magnetic$App_Update$subscriptions = function (_p0) {
 				_0: _elm_lang$mouse$Mouse$ups(_bitamar$magnetic$App_Update$MouseUp),
 				_1: {ctor: '[]'}
 			}
-		});
+		}
+	} : {
+		ctor: '::',
+		_0: ws,
+		_1: {ctor: '[]'}
+	};
+	return _elm_lang$core$Platform_Sub$batch(subs);
 };
 var _bitamar$magnetic$App_Update$Magnets = function (a) {
 	return {ctor: 'Magnets', _0: a};
 };
-var _bitamar$magnetic$App_Update$Http = function (a) {
-	return {ctor: 'Http', _0: a};
-};
-var _bitamar$magnetic$App_Update$init = {
-	ctor: '_Tuple2',
-	_0: _bitamar$magnetic$App_Model$emptyModel,
-	_1: A2(_elm_lang$core$Platform_Cmd$map, _bitamar$magnetic$App_Update$Http, _bitamar$magnetic$Http_Update$getMagnets)
-};
 var _bitamar$magnetic$App_Update$update = F2(
 	function (msg, model) {
-		var _p1 = msg;
-		switch (_p1.ctor) {
-			case 'Http':
-				var _p2 = A2(_bitamar$magnetic$Http_Update$update, _p1._0, model);
+		var _p0 = msg;
+		switch (_p0.ctor) {
+			case 'Magnets':
+				var _p1 = A2(_bitamar$magnetic$Magnet_Update$update, model, _p0._0);
+				var model_ = _p1._0;
+				var cmds = _p1._1;
+				return {
+					ctor: '_Tuple2',
+					_0: model_,
+					_1: A2(_elm_lang$core$Platform_Cmd$map, _bitamar$magnetic$App_Update$Magnets, cmds)
+				};
+			case 'MouseMove':
+				var _p2 = A2(
+					_bitamar$magnetic$Magnet_Update$update,
+					model,
+					_bitamar$magnetic$Magnet_Update$MouseMove(_p0._0));
 				var model_ = _p2._0;
 				var cmds = _p2._1;
 				return {
 					ctor: '_Tuple2',
 					_0: model_,
-					_1: A2(_elm_lang$core$Platform_Cmd$map, _bitamar$magnetic$App_Update$Http, cmds)
+					_1: A2(_elm_lang$core$Platform_Cmd$map, _bitamar$magnetic$App_Update$Magnets, cmds)
 				};
-			case 'Magnets':
-				var _p3 = A2(_bitamar$magnetic$Magnet_Update$update, model, _p1._0);
+			case 'MouseUp':
+				var _p3 = A2(
+					_bitamar$magnetic$Magnet_Update$update,
+					model,
+					_bitamar$magnetic$Magnet_Update$MouseUp(_p0._0));
 				var model_ = _p3._0;
 				var cmds = _p3._1;
 				return {
@@ -7126,30 +7433,36 @@ var _bitamar$magnetic$App_Update$update = F2(
 					_0: model_,
 					_1: A2(_elm_lang$core$Platform_Cmd$map, _bitamar$magnetic$App_Update$Magnets, cmds)
 				};
-			case 'MouseMove':
-				var _p4 = A2(
-					_bitamar$magnetic$Magnet_Update$update,
-					model,
-					_bitamar$magnetic$Magnet_Update$MouseMove(_p1._0));
-				var model_ = _p4._0;
-				var cmds = _p4._1;
-				return {
-					ctor: '_Tuple2',
-					_0: model_,
-					_1: A2(_elm_lang$core$Platform_Cmd$map, _bitamar$magnetic$App_Update$Magnets, cmds)
-				};
 			default:
-				var _p5 = A2(
-					_bitamar$magnetic$Magnet_Update$update,
-					model,
-					_bitamar$magnetic$Magnet_Update$MouseUp(_p1._0));
-				var model_ = _p5._0;
-				var cmds = _p5._1;
-				return {
-					ctor: '_Tuple2',
-					_0: model_,
-					_1: A2(_elm_lang$core$Platform_Cmd$map, _bitamar$magnetic$App_Update$Magnets, cmds)
-				};
+				var _p4 = A2(_elm_lang$core$Json_Decode$decodeString, _bitamar$magnetic$Magnet_Utils$decodeMessage, _p0._0);
+				if (_p4.ctor === 'Ok') {
+					var _p5 = _p4._0;
+					if (_p5.ctor === 'AllMagnets') {
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							_elm_lang$core$Native_Utils.update(
+								model,
+								{magnets: _p5._0}),
+							{ctor: '[]'});
+					} else {
+						var _p6 = A2(
+							_bitamar$magnetic$Magnet_Update$update,
+							model,
+							_bitamar$magnetic$Magnet_Update$IncomingMove(_p5._0));
+						var model_ = _p6._0;
+						var cmds = _p6._1;
+						return {
+							ctor: '_Tuple2',
+							_0: model_,
+							_1: A2(_elm_lang$core$Platform_Cmd$map, _bitamar$magnetic$App_Update$Magnets, cmds)
+						};
+					}
+				} else {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						model,
+						{ctor: '[]'});
+				}
 		}
 	});
 var _elm_lang$virtual_dom$VirtualDom_Debug$wrap;
@@ -9744,7 +10057,7 @@ var _bitamar$magnetic$Magnet_View$view = function (model) {
 					A2(
 						_elm_lang$core$List$map,
 						_bitamar$magnetic$Magnet_View$printMagnet,
-						_elm_lang$core$Dict$values(model))),
+						_elm_lang$core$Dict$values(model.magnets))),
 				_1: {ctor: '[]'}
 			}
 		});
