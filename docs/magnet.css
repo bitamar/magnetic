@@ -1,4 +1,6 @@
 .magnets div {
+    font-family: monospace;
+    font-size: 14px;
     color: white;
     background-color: #333;
     border: 1px solid white;
@@ -6,8 +8,6 @@
     align-items: center;
     justify-content: center;
     cursor: move;
-    width: 100px;
-    height: 30px;
     border-radius: 2px;
     position: absolute;
     -webkit-touch-callout: none;

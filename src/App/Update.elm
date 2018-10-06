@@ -1,24 +1,28 @@
 module App.Update exposing (Msg(..), init, subscriptions, update)
 
+import App.Json exposing (getMessage)
 import App.Model
     exposing
-        ( IncomingMessage(AllMagnets, SingleMove)
+        ( Drag
+        , IncomingMessage(AllMagnets, SingleMove)
+        , Magnet
         , Model
+        , Position
         , emptyModel
         , serverUrl
         )
-import Json.Decode exposing (decodeString)
-import Magnet.Update exposing (Msg)
-import Magnet.Utils exposing (decodeMessage)
-import Mouse exposing (Position)
+import App.Utils exposing (applyDrag, relativeCenter, updateMagnetMove)
+import Draggable
+import Draggable.Events exposing (onDragBy, onDragEnd)
 import WebSocket
 
 
 type Msg
-    = Magnets Magnet.Update.Msg
-    | MouseMove Position
-    | MouseUp Position
-    | IncomingMessage String
+    = IncomingMessage String
+    | DragMsg (Draggable.Msg ())
+    | OnDragBy Draggable.Delta
+    | StopDragging
+    | StartDragging (Draggable.Msg ()) ( Magnet, Position )
 
 
 init : ( Model, Cmd Msg )
@@ -26,38 +30,51 @@ init =
     emptyModel ! []
 
 
+dragConfig : Draggable.Config () Msg
+dragConfig =
+    Draggable.customConfig
+        [ onDragBy OnDragBy
+        , onDragEnd StopDragging
+        ]
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Magnets msg_ ->
-            let
-                ( model_, cmds ) =
-                    Magnet.Update.update model msg_
-            in
-            ( model_
-            , Cmd.map Magnets cmds
-            )
+        DragMsg dragMsg ->
+            Draggable.update dragConfig dragMsg model
 
-        MouseMove position ->
+        StartDragging dragMsg ( magnet, touchPosition ) ->
             let
-                ( model_, cmds ) =
-                    Magnet.Update.update model <| Magnet.Update.MouseMove position
-            in
-            ( model_
-            , Cmd.map Magnets cmds
-            )
+                center =
+                    relativeCenter magnet
 
-        MouseUp position ->
-            let
-                ( model_, cmds ) =
-                    Magnet.Update.update model <| Magnet.Update.MouseUp position
+                relativeHorizontalDistance =
+                    toFloat (touchPosition.x - center.x) / toFloat center.x
+
+                drag =
+                    Drag magnet.id relativeHorizontalDistance
             in
-            ( model_
-            , Cmd.map Magnets cmds
-            )
+            { model | dragData = Just drag }
+                |> Draggable.update dragConfig dragMsg
+
+        OnDragBy delta ->
+            let
+                ( magnets, maybeMoveJson ) =
+                    applyDrag model.magnets model.dragData delta
+
+                cmd =
+                    case maybeMoveJson of
+                        Just json ->
+                            WebSocket.send serverUrl json
+
+                        _ ->
+                            Cmd.none
+            in
+            { model | magnets = magnets } ! [ cmd ]
 
         IncomingMessage string ->
-            case decodeString decodeMessage string of
+            case getMessage string of
                 Ok message ->
                     case message of
                         AllMagnets magnets ->
@@ -65,13 +82,16 @@ update msg model =
 
                         SingleMove move ->
                             let
-                                ( model_, cmds ) =
-                                    Magnet.Update.update model <| Magnet.Update.IncomingMove move
+                                magnets_ =
+                                    updateMagnetMove model.magnets move
                             in
-                            ( model_, Cmd.map Magnets cmds )
+                            { model | magnets = magnets_ } ! []
 
                 Err _ ->
                     model ! []
+
+        StopDragging ->
+            { model | dragData = Nothing } ! []
 
 
 
@@ -79,20 +99,8 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
-    let
-        ws =
-            WebSocket.listen serverUrl IncomingMessage
-
-        subs =
-            if model.dragging then
-                [ ws
-                , -- Subscribe to mouse move and mouse up, only when dragging already.
-                  Mouse.moves MouseMove
-                , Mouse.ups MouseUp
-                ]
-
-            else
-                [ ws ]
-    in
-    Sub.batch subs
+subscriptions { drag } =
+    Sub.batch
+        [ WebSocket.listen serverUrl IncomingMessage
+        , Draggable.subscriptions DragMsg drag
+        ]
