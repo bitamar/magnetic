@@ -1,6 +1,6 @@
 module View exposing (view)
 
-import Dict
+import Dict exposing (values)
 import Draggable
 import Html exposing (Html, div, node, text)
 import Html.Attributes exposing (class, href, rel, style)
@@ -11,14 +11,20 @@ import Utils exposing (height, width)
 
 
 view : Model -> Html Msg
-view model =
+view { magnets, dragData } =
     let
-        magnets =
-            List.map viewMagnet <| Dict.values model.magnets
+        -- Append the dragged magnet to the list.
+        magnets_ =
+            case dragData of
+                Just { magnet } ->
+                    values magnets ++ [ magnet ]
+
+                _ ->
+                    values magnets
     in
     div []
         [ node "link" [ rel "stylesheet", href "magnet.css" ] []
-        , div [ class "magnets" ] magnets
+        , div [ class "magnets" ] (List.map viewMagnet magnets_)
         ]
 
 

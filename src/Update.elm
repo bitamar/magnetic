@@ -1,5 +1,6 @@
 module Update exposing (Msg(..), subscriptions, update)
 
+import Dict exposing (insert, remove)
 import Draggable
 import Draggable.Events exposing (onDragBy, onDragEnd)
 import Json exposing (getMessage)
@@ -34,7 +35,7 @@ dragConfig =
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update msg ({ magnets, dragData } as model) =
     case msg of
         DragMsg dragMsg ->
             Draggable.update dragConfig dragMsg model
@@ -49,36 +50,34 @@ update msg model =
 
                 drag =
                     Drag magnet relativeHorizontalDistance
+
+                model_ =
+                    { model
+                        | dragData = Just drag
+                        , magnets = remove magnet.id magnets
+                    }
             in
-            { model | dragData = Just drag }
-                |> Draggable.update dragConfig dragMsg
+            Draggable.update dragConfig dragMsg model_
 
         OnDragBy delta ->
-            let
-                ( magnets, maybeMoveJson ) =
-                    applyDrag model.magnets model.dragData delta
+            case applyDrag dragData delta of
+                Just ( newDrag, moveJson ) ->
+                    { model | dragData = Just newDrag } ! [ WebSocket.send serverUrl moveJson ]
 
-                cmd =
-                    case maybeMoveJson of
-                        Just json ->
-                            WebSocket.send serverUrl json
-
-                        _ ->
-                            Cmd.none
-            in
-            { model | magnets = magnets } ! [ cmd ]
+                Nothing ->
+                    model ! []
 
         IncomingMessage string ->
             case getMessage string of
                 Ok message ->
                     case message of
-                        AllMagnets magnets ->
-                            { model | magnets = magnets } ! []
+                        AllMagnets magnets_ ->
+                            { model | magnets = magnets_ } ! []
 
                         SingleMove move ->
                             let
                                 magnets_ =
-                                    updateMagnetMove model.magnets move
+                                    updateMagnetMove magnets move
                             in
                             { model | magnets = magnets_ } ! []
 
@@ -86,7 +85,16 @@ update msg model =
                     model ! []
 
         StopDragging ->
-            { model | dragData = Nothing } ! []
+            let
+                magnets_ =
+                    case dragData of
+                        Just { magnet } ->
+                            insert magnet.id magnet magnets
+
+                        _ ->
+                            magnets
+            in
+            { model | dragData = Nothing, magnets = magnets_ } ! []
 
 
 

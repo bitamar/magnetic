@@ -9249,47 +9249,50 @@ var _bitamar$magnetic$Utils$updateMagnetMove = F2(
 		};
 		return A3(_elm_lang$core$Dict$update, move.id, applyMove, magnets);
 	});
-var _bitamar$magnetic$Utils$updateMagnet = F2(
-	function (magnets, magnet) {
-		return A3(
-			_elm_lang$core$Dict$update,
-			magnet.id,
-			function (_p1) {
-				return _elm_lang$core$Maybe$Just(magnet);
-			},
-			magnets);
-	});
-var _bitamar$magnetic$Utils$applyDrag = F3(
-	function (magnets, maybeDrag, _p2) {
-		var _p3 = _p2;
-		var _p6 = _p3._1;
-		var _p4 = maybeDrag;
-		if (_p4.ctor === 'Just') {
-			var _p5 = _p4._0.magnet;
-			var position = _p5.position;
+var _bitamar$magnetic$Utils$applyDrag = F2(
+	function (maybeDrag, _p1) {
+		var _p2 = _p1;
+		var _p5 = _p2._1;
+		var _p3 = maybeDrag;
+		if (_p3.ctor === 'Just') {
+			var _p4 = _p3._0.magnet;
+			var position = _p4.position;
 			var position_ = _elm_lang$core$Native_Utils.update(
 				position,
 				{
-					x: position.x + _elm_lang$core$Basics$floor(_p3._0),
-					y: position.y + _elm_lang$core$Basics$floor(_p6)
+					x: position.x + _elm_lang$core$Basics$floor(_p2._0),
+					y: position.y + _elm_lang$core$Basics$floor(_p5)
 				});
-			var rotation_ = _p5.rotation + (_p4._0.horizontalGrab * _p6);
+			var rotation_ = _p4.rotation + (_p3._0.horizontalGrab * _p5);
 			var rotation__ = A2(
 				_elm_lang$core$Basics$max,
 				A2(_elm_lang$core$Basics$min, rotation_, 90),
 				-90);
 			var magnet_ = _elm_lang$core$Native_Utils.update(
-				_p5,
+				_p4,
 				{position: position_, rotation: rotation__});
 			var moveJson = _bitamar$magnetic$Json$getMoveJson(magnet_);
-			return {
-				ctor: '_Tuple2',
-				_0: A2(_bitamar$magnetic$Utils$updateMagnet, magnets, magnet_),
-				_1: _elm_lang$core$Maybe$Just(moveJson)
-			};
+			return _elm_lang$core$Maybe$Just(
+				{
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						_p3._0,
+						{magnet: magnet_}),
+					_1: moveJson
+				});
 		} else {
-			return {ctor: '_Tuple2', _0: magnets, _1: _elm_lang$core$Maybe$Nothing};
+			return _elm_lang$core$Maybe$Nothing;
 		}
+	});
+var _bitamar$magnetic$Utils$updateMagnet = F2(
+	function (magnets, magnet) {
+		return A3(
+			_elm_lang$core$Dict$update,
+			magnet.id,
+			function (_p6) {
+				return _elm_lang$core$Maybe$Just(magnet);
+			},
+			magnets);
 	});
 var _bitamar$magnetic$Utils$height = 30;
 var _bitamar$magnetic$Utils$width = function (_p7) {
@@ -9853,79 +9856,89 @@ var _bitamar$magnetic$Update$dragConfig = _zaboco$elm_draggable$Draggable$custom
 		}
 	});
 var _bitamar$magnetic$Update$update = F2(
-	function (msg, model) {
-		var _p0 = msg;
-		switch (_p0.ctor) {
+	function (msg, _p0) {
+		var _p1 = _p0;
+		var _p11 = _p1;
+		var _p10 = _p1.magnets;
+		var _p9 = _p1.dragData;
+		var _p2 = msg;
+		switch (_p2.ctor) {
 			case 'DragMsg':
-				return A3(_zaboco$elm_draggable$Draggable$update, _bitamar$magnetic$Update$dragConfig, _p0._0, model);
+				return A3(_zaboco$elm_draggable$Draggable$update, _bitamar$magnetic$Update$dragConfig, _p2._0, _p11);
 			case 'StartDragging':
-				var _p1 = _p0._1._0;
-				var center = _bitamar$magnetic$Utils$relativeCenter(_p1);
-				var relativeHorizontalDistance = _elm_lang$core$Basics$toFloat(_p0._1._1.x - center.x) / _elm_lang$core$Basics$toFloat(center.x);
-				var drag = A2(_bitamar$magnetic$Model$Drag, _p1, relativeHorizontalDistance);
-				return A3(
-					_zaboco$elm_draggable$Draggable$update,
-					_bitamar$magnetic$Update$dragConfig,
-					_p0._0,
-					_elm_lang$core$Native_Utils.update(
-						model,
-						{
-							dragData: _elm_lang$core$Maybe$Just(drag)
-						}));
-			case 'OnDragBy':
-				var _p2 = A3(_bitamar$magnetic$Utils$applyDrag, model.magnets, model.dragData, _p0._0);
-				var magnets = _p2._0;
-				var maybeMoveJson = _p2._1;
-				var cmd = function () {
-					var _p3 = maybeMoveJson;
-					if (_p3.ctor === 'Just') {
-						return A2(_elm_lang$websocket$WebSocket$send, _bitamar$magnetic$Model$serverUrl, _p3._0);
-					} else {
-						return _elm_lang$core$Platform_Cmd$none;
-					}
-				}();
-				return A2(
-					_elm_lang$core$Platform_Cmd_ops['!'],
-					_elm_lang$core$Native_Utils.update(
-						model,
-						{magnets: magnets}),
+				var _p3 = _p2._1._0;
+				var center = _bitamar$magnetic$Utils$relativeCenter(_p3);
+				var relativeHorizontalDistance = _elm_lang$core$Basics$toFloat(_p2._1._1.x - center.x) / _elm_lang$core$Basics$toFloat(center.x);
+				var drag = A2(_bitamar$magnetic$Model$Drag, _p3, relativeHorizontalDistance);
+				var model_ = _elm_lang$core$Native_Utils.update(
+					_p11,
 					{
-						ctor: '::',
-						_0: cmd,
-						_1: {ctor: '[]'}
+						dragData: _elm_lang$core$Maybe$Just(drag),
+						magnets: A2(_elm_lang$core$Dict$remove, _p3.id, _p10)
 					});
+				return A3(_zaboco$elm_draggable$Draggable$update, _bitamar$magnetic$Update$dragConfig, _p2._0, model_);
+			case 'OnDragBy':
+				var _p4 = A2(_bitamar$magnetic$Utils$applyDrag, _p9, _p2._0);
+				if (_p4.ctor === 'Just') {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						_elm_lang$core$Native_Utils.update(
+							_p11,
+							{
+								dragData: _elm_lang$core$Maybe$Just(_p4._0._0)
+							}),
+						{
+							ctor: '::',
+							_0: A2(_elm_lang$websocket$WebSocket$send, _bitamar$magnetic$Model$serverUrl, _p4._0._1),
+							_1: {ctor: '[]'}
+						});
+				} else {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						_p11,
+						{ctor: '[]'});
+				}
 			case 'IncomingMessage':
-				var _p4 = _bitamar$magnetic$Json$getMessage(_p0._0);
-				if (_p4.ctor === 'Ok') {
-					var _p5 = _p4._0;
-					if (_p5.ctor === 'AllMagnets') {
+				var _p5 = _bitamar$magnetic$Json$getMessage(_p2._0);
+				if (_p5.ctor === 'Ok') {
+					var _p6 = _p5._0;
+					if (_p6.ctor === 'AllMagnets') {
 						return A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
 							_elm_lang$core$Native_Utils.update(
-								model,
-								{magnets: _p5._0}),
+								_p11,
+								{magnets: _p6._0}),
 							{ctor: '[]'});
 					} else {
-						var magnets_ = A2(_bitamar$magnetic$Utils$updateMagnetMove, model.magnets, _p5._0);
+						var magnets_ = A2(_bitamar$magnetic$Utils$updateMagnetMove, _p10, _p6._0);
 						return A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
 							_elm_lang$core$Native_Utils.update(
-								model,
+								_p11,
 								{magnets: magnets_}),
 							{ctor: '[]'});
 					}
 				} else {
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
-						model,
+						_p11,
 						{ctor: '[]'});
 				}
 			default:
+				var magnets_ = function () {
+					var _p7 = _p9;
+					if (_p7.ctor === 'Just') {
+						var _p8 = _p7._0.magnet;
+						return A3(_elm_lang$core$Dict$insert, _p8.id, _p8, _p10);
+					} else {
+						return _p10;
+					}
+				}();
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
 					_elm_lang$core$Native_Utils.update(
-						model,
-						{dragData: _elm_lang$core$Maybe$Nothing}),
+						_p11,
+						{dragData: _elm_lang$core$Maybe$Nothing, magnets: magnets_}),
 					{ctor: '[]'});
 		}
 	});
@@ -9935,15 +9948,15 @@ var _bitamar$magnetic$Update$DragMsg = function (a) {
 var _bitamar$magnetic$Update$IncomingMessage = function (a) {
 	return {ctor: 'IncomingMessage', _0: a};
 };
-var _bitamar$magnetic$Update$subscriptions = function (_p6) {
-	var _p7 = _p6;
+var _bitamar$magnetic$Update$subscriptions = function (_p12) {
+	var _p13 = _p12;
 	return _elm_lang$core$Platform_Sub$batch(
 		{
 			ctor: '::',
 			_0: A2(_elm_lang$websocket$WebSocket$listen, _bitamar$magnetic$Model$serverUrl, _bitamar$magnetic$Update$IncomingMessage),
 			_1: {
 				ctor: '::',
-				_0: A2(_zaboco$elm_draggable$Draggable$subscriptions, _bitamar$magnetic$Update$DragMsg, _p7.drag),
+				_0: A2(_zaboco$elm_draggable$Draggable$subscriptions, _bitamar$magnetic$Update$DragMsg, _p13.drag),
 				_1: {ctor: '[]'}
 			}
 		});
@@ -10376,11 +10389,24 @@ var _bitamar$magnetic$View$viewMagnet = function (_p0) {
 			_1: {ctor: '[]'}
 		});
 };
-var _bitamar$magnetic$View$view = function (model) {
-	var magnets = A2(
-		_elm_lang$core$List$map,
-		_bitamar$magnetic$View$viewMagnet,
-		_elm_lang$core$Dict$values(model.magnets));
+var _bitamar$magnetic$View$view = function (_p4) {
+	var _p5 = _p4;
+	var _p7 = _p5.magnets;
+	var magnets_ = function () {
+		var _p6 = _p5.dragData;
+		if (_p6.ctor === 'Just') {
+			return A2(
+				_elm_lang$core$Basics_ops['++'],
+				_elm_lang$core$Dict$values(_p7),
+				{
+					ctor: '::',
+					_0: _p6._0.magnet,
+					_1: {ctor: '[]'}
+				});
+		} else {
+			return _elm_lang$core$Dict$values(_p7);
+		}
+	}();
 	return A2(
 		_elm_lang$html$Html$div,
 		{ctor: '[]'},
@@ -10408,7 +10434,7 @@ var _bitamar$magnetic$View$view = function (model) {
 						_0: _elm_lang$html$Html_Attributes$class('magnets'),
 						_1: {ctor: '[]'}
 					},
-					magnets),
+					A2(_elm_lang$core$List$map, _bitamar$magnetic$View$viewMagnet, magnets_)),
 				_1: {ctor: '[]'}
 			}
 		});

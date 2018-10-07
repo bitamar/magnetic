@@ -38,10 +38,10 @@ relativeCenter magnet =
     { x = width magnet // 2, y = height // 2 }
 
 
-applyDrag : Magnets -> Maybe Drag -> Draggable.Delta -> ( Magnets, Maybe String )
-applyDrag magnets maybeDrag ( dx, dy ) =
+applyDrag : Maybe Drag -> Draggable.Delta -> Maybe ( Drag, String )
+applyDrag maybeDrag ( dx, dy ) =
     case maybeDrag of
-        Just { magnet, horizontalGrab } ->
+        Just ({ magnet, horizontalGrab } as drag) ->
             let
                 -- horizontalGrab is negative when grabbing from the magnet's
                 -- left, and positive when grabbing from the right. dy is
@@ -69,12 +69,13 @@ applyDrag magnets maybeDrag ( dx, dy ) =
                 moveJson =
                     getMoveJson magnet_
             in
-            ( updateMagnet magnets magnet_
-            , Just moveJson
-            )
+            Just
+                ( { drag | magnet = magnet_ }
+                , moveJson
+                )
 
         _ ->
-            ( magnets, Nothing )
+            Nothing
 
 
 {-| Apply a move to a magnet in the dictionary.
