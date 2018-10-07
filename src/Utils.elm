@@ -1,4 +1,4 @@
-module App.Utils exposing
+module Utils exposing
     ( applyDrag
     , getDraggedMagnet
     , height
@@ -8,17 +8,10 @@ module App.Utils exposing
     , width
     )
 
-import App.Json exposing (getMoveJson)
-import App.Model
-    exposing
-        ( Drag
-        , Magnet
-        , Magnets
-        , Move
-        , Position
-        )
 import Dict
 import Draggable
+import Json exposing (getMoveJson)
+import Model exposing (Drag, Magnet, Magnets, Move, Position)
 
 
 {-| Get the magnet width in pixels, according to the word length.

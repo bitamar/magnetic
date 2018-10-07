@@ -1,4 +1,4 @@
-module App.Json exposing
+module Json exposing
     ( decodeMagnets
     , decodeMouseOffsetWithMagnet
     , decodeMove
@@ -6,7 +6,9 @@ module App.Json exposing
     , getMoveJson
     )
 
-import App.Model
+import Json.Decode as Decode exposing (Decoder, decodeString, field)
+import Json.Encode as Encode exposing (encode)
+import Model
     exposing
         ( IncomingMessage(AllMagnets, SingleMove)
         , Magnet
@@ -14,8 +16,6 @@ import App.Model
         , Move
         , Position
         )
-import Json.Decode as Decode exposing (Decoder, decodeString, field)
-import Json.Encode as Encode exposing (encode)
 
 
 decodeMagnets : Decoder Magnets

@@ -1,13 +1,13 @@
-module App.View exposing (view)
+module View exposing (view)
 
-import App.Json exposing (decodeMouseOffsetWithMagnet)
-import App.Model exposing (Magnet, Model)
-import App.Update exposing (Msg(StartDragging))
-import App.Utils exposing (height, width)
 import Dict
 import Draggable
 import Html exposing (Html, div, node, text)
 import Html.Attributes exposing (class, href, rel, style)
+import Json exposing (decodeMouseOffsetWithMagnet)
+import Model exposing (Magnet, Model)
+import Update exposing (Msg(StartDragging))
+import Utils exposing (height, width)
 
 
 view : Model -> Html Msg

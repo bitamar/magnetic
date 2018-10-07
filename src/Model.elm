@@ -1,4 +1,4 @@
-module App.Model exposing
+module Model exposing
     ( Drag
     , Id
     , IncomingMessage(AllMagnets, SingleMove)

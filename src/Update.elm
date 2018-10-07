@@ -1,7 +1,9 @@
-module App.Update exposing (Msg(..), init, subscriptions, update)
+module Update exposing (Msg(..), init, subscriptions, update)
 
-import App.Json exposing (getMessage)
-import App.Model
+import Draggable
+import Draggable.Events exposing (onDragBy, onDragEnd)
+import Json exposing (getMessage)
+import Model
     exposing
         ( Drag
         , IncomingMessage(AllMagnets, SingleMove)
@@ -11,9 +13,7 @@ import App.Model
         , emptyModel
         , serverUrl
         )
-import App.Utils exposing (applyDrag, relativeCenter, updateMagnetMove)
-import Draggable
-import Draggable.Events exposing (onDragBy, onDragEnd)
+import Utils exposing (applyDrag, relativeCenter, updateMagnetMove)
 import WebSocket
 
 
