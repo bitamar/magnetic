@@ -1,6 +1,5 @@
 module Utils exposing
     ( applyDrag
-    , getDraggedMagnet
     , height
     , relativeCenter
     , updateMagnet
@@ -27,21 +26,6 @@ height =
     30
 
 
-getDraggedMagnet : Magnets -> Maybe Drag -> Maybe ( Magnet, Drag )
-getDraggedMagnet magnets maybeDrag =
-    case maybeDrag of
-        Just drag ->
-            case Dict.get drag.id magnets of
-                Just magnet ->
-                    Just ( magnet, drag )
-
-                _ ->
-                    Nothing
-
-        _ ->
-            Nothing
-
-
 {-| Replace the updated magnet on the magnets dictionary.
 -}
 updateMagnet : Magnets -> Magnet -> Magnets
@@ -56,15 +40,15 @@ relativeCenter magnet =
 
 applyDrag : Magnets -> Maybe Drag -> Draggable.Delta -> ( Magnets, Maybe String )
 applyDrag magnets maybeDrag ( dx, dy ) =
-    case getDraggedMagnet magnets maybeDrag of
-        Just ( magnet, drag ) ->
+    case maybeDrag of
+        Just { magnet, horizontalGrab } ->
             let
                 -- horizontalGrab is negative when grabbing from the magnet's
                 -- left, and positive when grabbing from the right. dy is
                 -- negative when grabbing upwards, and positive when grabbing
                 -- downwards.
                 rotation_ =
-                    magnet.rotation + drag.horizontalGrab * dy
+                    magnet.rotation + horizontalGrab * dy
 
                 -- Limit the rotation between -90 and 90.
                 rotation__ =

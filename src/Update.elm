@@ -1,4 +1,4 @@
-module Update exposing (Msg(..), init, subscriptions, update)
+module Update exposing (Msg(..), subscriptions, update)
 
 import Draggable
 import Draggable.Events exposing (onDragBy, onDragEnd)
@@ -25,11 +25,6 @@ type Msg
     | StartDragging (Draggable.Msg ()) ( Magnet, Position )
 
 
-init : ( Model, Cmd Msg )
-init =
-    emptyModel ! []
-
-
 dragConfig : Draggable.Config () Msg
 dragConfig =
     Draggable.customConfig
@@ -53,7 +48,7 @@ update msg model =
                     toFloat (touchPosition.x - center.x) / toFloat center.x
 
                 drag =
-                    Drag magnet.id relativeHorizontalDistance
+                    Drag magnet relativeHorizontalDistance
             in
             { model | dragData = Just drag }
                 |> Draggable.update dragConfig dragMsg

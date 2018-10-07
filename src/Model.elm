@@ -42,7 +42,7 @@ type alias Move =
 
 
 type alias Drag =
-    { id : Id
+    { magnet : Magnet
     , -- Number between -1 and 1, telling where the magnet was grabbed, along
       -- its width axis. -1 is the left, and 1 is the right.
       horizontalGrab : Float
