@@ -43,9 +43,9 @@ type alias Move =
 
 type alias Drag =
     { magnet : Magnet
-    , -- Number between -1 and 1, telling where the magnet was grabbed, along
-      -- its width axis. -1 is the left, and 1 is the right.
-      horizontalGrab : Float
+    , -- Number between -1 and 1, telling how much, and to which direction to
+      -- rotate the magnet when the position changes.
+      rotationFactor : Float
     }
 
 

@@ -11,7 +11,6 @@ import Model
         , Magnet
         , Model
         , Position
-        , emptyModel
         , serverUrl
         )
 import Utils exposing (applyDrag, relativeCenter, updateMagnetMove)
@@ -48,8 +47,14 @@ update msg ({ magnets, dragData } as model) =
                 relativeHorizontalDistance =
                     toFloat (touchPosition.x - center.x) / toFloat center.x
 
+                -- Easing the rotation when grabbing close to the horizontal
+                -- center by cubing the relative distance. Keeping its sign
+                -- when it's negative by using abs once.
+                rotationFactor =
+                    abs relativeHorizontalDistance * relativeHorizontalDistance
+
                 drag =
-                    Drag magnet relativeHorizontalDistance
+                    Drag magnet rotationFactor
 
                 model_ =
                     { model

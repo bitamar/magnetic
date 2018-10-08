@@ -38,17 +38,19 @@ relativeCenter magnet =
     { x = width magnet // 2, y = height // 2 }
 
 
+{-| Update the dragged magnet with the move delta, and produce the move json.
+-}
 applyDrag : Maybe Drag -> Draggable.Delta -> Maybe ( Drag, String )
 applyDrag maybeDrag ( dx, dy ) =
     case maybeDrag of
-        Just ({ magnet, horizontalGrab } as drag) ->
+        Just ({ magnet, rotationFactor } as drag) ->
             let
                 -- horizontalGrab is negative when grabbing from the magnet's
                 -- left, and positive when grabbing from the right. dy is
                 -- negative when grabbing upwards, and positive when grabbing
                 -- downwards.
                 rotation_ =
-                    magnet.rotation + horizontalGrab * dy
+                    magnet.rotation + rotationFactor * dy
 
                 -- Limit the rotation between -90 and 90.
                 rotation__ =

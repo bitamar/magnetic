@@ -9080,7 +9080,7 @@ var _bitamar$magnetic$Model$Move = F4(
 	});
 var _bitamar$magnetic$Model$Drag = F2(
 	function (a, b) {
-		return {magnet: a, horizontalGrab: b};
+		return {magnet: a, rotationFactor: b};
 	});
 var _bitamar$magnetic$Model$Model = F3(
 	function (a, b, c) {
@@ -9263,7 +9263,7 @@ var _bitamar$magnetic$Utils$applyDrag = F2(
 					x: position.x + _elm_lang$core$Basics$floor(_p2._0),
 					y: position.y + _elm_lang$core$Basics$floor(_p5)
 				});
-			var rotation_ = _p4.rotation + (_p3._0.horizontalGrab * _p5);
+			var rotation_ = _p4.rotation + (_p3._0.rotationFactor * _p5);
 			var rotation__ = A2(
 				_elm_lang$core$Basics$max,
 				A2(_elm_lang$core$Basics$min, rotation_, 90),
@@ -9869,7 +9869,8 @@ var _bitamar$magnetic$Update$update = F2(
 				var _p3 = _p2._1._0;
 				var center = _bitamar$magnetic$Utils$relativeCenter(_p3);
 				var relativeHorizontalDistance = _elm_lang$core$Basics$toFloat(_p2._1._1.x - center.x) / _elm_lang$core$Basics$toFloat(center.x);
-				var drag = A2(_bitamar$magnetic$Model$Drag, _p3, relativeHorizontalDistance);
+				var rotationFactor = _elm_lang$core$Basics$abs(relativeHorizontalDistance) * relativeHorizontalDistance;
+				var drag = A2(_bitamar$magnetic$Model$Drag, _p3, rotationFactor);
 				var model_ = _elm_lang$core$Native_Utils.update(
 					_p11,
 					{
