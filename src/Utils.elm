@@ -2,15 +2,16 @@ module Utils exposing
     ( applyDrag
     , height
     , relativeCenter
+    , stopDrag
     , updateMagnet
     , updateMagnetMove
     , width
     )
 
-import Dict
+import Dict exposing (insert)
 import Draggable
 import Json exposing (getMoveJson)
-import Model exposing (Drag, Magnet, Magnets, Move, Position)
+import Model exposing (Drag, Magnet, Magnets, Model, Move, Position)
 
 
 {-| Get the magnet width in pixels, according to the word length.
@@ -97,3 +98,19 @@ updateMagnetMove magnets move =
                     Nothing
     in
     Dict.update move.id applyMove magnets
+
+
+{-| Stop the drag and push the dragged magnet back to the dict.
+-}
+stopDrag : Model -> Model
+stopDrag ({ magnets, dragData } as model) =
+    let
+        magnets_ =
+            case dragData of
+                Just { magnet } ->
+                    insert magnet.id magnet magnets
+
+                _ ->
+                    magnets
+    in
+    { model | dragData = Nothing, magnets = magnets_ }
