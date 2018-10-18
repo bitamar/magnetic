@@ -50,7 +50,7 @@ type alias Drag =
 
 
 type alias Magnets =
-    Dict String Magnet
+    Dict Id Magnet
 
 
 type alias Model =

@@ -8,14 +8,7 @@ module Json exposing
 
 import Json.Decode as Decode exposing (Decoder, decodeString, field)
 import Json.Encode as Encode exposing (encode)
-import Model
-    exposing
-        ( IncomingMessage(AllMagnets, SingleMove)
-        , Magnet
-        , Magnets
-        , Move
-        , Position
-        )
+import Model exposing (IncomingMessage(..), Magnet, Magnets, Move, Position)
 
 
 decodeMagnets : Decoder Magnets
@@ -43,14 +36,14 @@ getMessage string =
     let
         decodeMessage : Decoder IncomingMessage
         decodeMessage =
-            Decode.oneOf [ decodeSingleMoveMessage, decodeAllMagnnetsMessage ]
+            Decode.oneOf [ decodeSingleMoveMessage, decodeAllMagnetsMessage ]
 
         decodeSingleMoveMessage : Decoder IncomingMessage
         decodeSingleMoveMessage =
             Decode.map SingleMove decodeMove
 
-        decodeAllMagnnetsMessage : Decoder IncomingMessage
-        decodeAllMagnnetsMessage =
+        decodeAllMagnetsMessage : Decoder IncomingMessage
+        decodeAllMagnetsMessage =
             Decode.map AllMagnets decodeMagnets
     in
     decodeString decodeMessage string

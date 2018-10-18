@@ -9167,7 +9167,7 @@ var _bitamar$magnetic$Json$decodeMagnets = function () {
 	return _elm_lang$core$Json_Decode$dict(decodeMagnet);
 }();
 var _bitamar$magnetic$Json$getMessage = function (string) {
-	var decodeAllMagnnetsMessage = A2(_elm_lang$core$Json_Decode$map, _bitamar$magnetic$Model$AllMagnets, _bitamar$magnetic$Json$decodeMagnets);
+	var decodeAllMagnetsMessage = A2(_elm_lang$core$Json_Decode$map, _bitamar$magnetic$Model$AllMagnets, _bitamar$magnetic$Json$decodeMagnets);
 	var decodeSingleMoveMessage = A2(_elm_lang$core$Json_Decode$map, _bitamar$magnetic$Model$SingleMove, _bitamar$magnetic$Json$decodeMove);
 	var decodeMessage = _elm_lang$core$Json_Decode$oneOf(
 		{
@@ -9175,7 +9175,7 @@ var _bitamar$magnetic$Json$getMessage = function (string) {
 			_0: decodeSingleMoveMessage,
 			_1: {
 				ctor: '::',
-				_0: decodeAllMagnnetsMessage,
+				_0: decodeAllMagnetsMessage,
 				_1: {ctor: '[]'}
 			}
 		});

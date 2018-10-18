@@ -36,7 +36,9 @@ updateMagnet magnets magnet =
 
 relativeCenter : Magnet -> Position
 relativeCenter magnet =
-    { x = width magnet // 2, y = height // 2 }
+    { x = width magnet // 2
+    , y = height // 2
+    }
 
 
 {-| Update the dragged magnet with the move delta, and produce the move json.
