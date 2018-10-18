@@ -67,7 +67,14 @@ type IncomingMessage
 
 emptyModel : Model
 emptyModel =
-    { magnets = Dict.empty
+    let
+        id =
+            "loading"
+
+        loadingMagnet =
+            Magnet id "Loading..." { x = 500, y = 500 } 10 False
+    in
+    { magnets = Dict.singleton id loadingMagnet
     , dragData = Nothing
     , drag = Draggable.init
     }
