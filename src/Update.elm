@@ -7,13 +7,19 @@ import Json exposing (getMessage)
 import Model
     exposing
         ( Drag
-        , IncomingMessage(AllMagnets, SingleMove)
+        , IncomingMessage(AllMagnets, SingleMove, Unlock)
         , Magnet
         , Model
         , Position
         , serverUrl
         )
-import Utils exposing (applyDrag, relativeCenter, stopDrag, updateMagnetMove)
+import Utils
+    exposing
+        ( applyDrag
+        , applyIncomingMove
+        , relativeCenter
+        , stopDrag
+        )
 import WebSocket
 
 
@@ -87,11 +93,25 @@ update msg model =
                         SingleMove move ->
                             let
                                 magnets_ =
-                                    updateMagnetMove model.magnets move
+                                    applyIncomingMove model.magnets move
+                            in
+                            { model | magnets = magnets_ } ! []
+
+                        Unlock id ->
+                            let
+                                unlock =
+                                    Maybe.map (\magnet -> { magnet | locked = False })
+
+                                magnets_ =
+                                    Dict.update id unlock model.magnets
                             in
                             { model | magnets = magnets_ } ! []
 
                 Err error ->
+                    let
+                        _ =
+                            Debug.log "error" error
+                    in
                     model ! []
 
         StopDragging ->

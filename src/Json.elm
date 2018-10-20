@@ -1,7 +1,6 @@
 module Json exposing
     ( decodeMagnets
     , decodeMouseOffsetWithMagnet
-    , decodeMove
     , getMessage
     , getMoveJson
     )
@@ -17,16 +16,17 @@ decodeMagnets =
         decodePosition : Decoder Position
         decodePosition =
             Decode.map2 Position
-                (Decode.field "x" Decode.int)
-                (Decode.field "y" Decode.int)
+                (field "x" Decode.int)
+                (field "y" Decode.int)
 
         decodeMagnet : Decoder Magnet
         decodeMagnet =
-            Decode.map4 Magnet
-                (field "id" Decode.string)
-                (field "word" Decode.string)
-                (field "position" decodePosition)
-                (field "rotation" Decode.float)
+            Decode.map5 Magnet
+                (field "i" Decode.string)
+                (field "w" Decode.string)
+                decodePosition
+                (field "r" Decode.float)
+                (field "l" Decode.bool)
     in
     Decode.dict decodeMagnet
 
@@ -36,7 +36,11 @@ getMessage string =
     let
         decodeMessage : Decoder IncomingMessage
         decodeMessage =
-            Decode.oneOf [ decodeSingleMoveMessage, decodeAllMagnetsMessage ]
+            Decode.oneOf
+                [ decodeSingleMoveMessage
+                , decodeAllMagnetsMessage
+                , decodeUnlockMessage
+                ]
 
         decodeSingleMoveMessage : Decoder IncomingMessage
         decodeSingleMoveMessage =
@@ -45,6 +49,10 @@ getMessage string =
         decodeAllMagnetsMessage : Decoder IncomingMessage
         decodeAllMagnetsMessage =
             Decode.map AllMagnets decodeMagnets
+
+        decodeUnlockMessage : Decoder IncomingMessage
+        decodeUnlockMessage =
+            Decode.map Unlock (field "unlock" Decode.string)
     in
     decodeString decodeMessage string
 
@@ -54,8 +62,8 @@ decodeMouseOffsetWithMagnet magnet =
     let
         decodeOffset =
             Decode.map2 Position
-                (Decode.field "offsetX" Decode.int)
-                (Decode.field "offsetY" Decode.int)
+                (field "offsetX" Decode.int)
+                (field "offsetY" Decode.int)
     in
     Decode.map2 (,)
         (Decode.succeed magnet)

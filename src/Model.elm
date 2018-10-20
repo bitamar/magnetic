@@ -1,7 +1,7 @@
 module Model exposing
     ( Drag
     , Id
-    , IncomingMessage(AllMagnets, SingleMove)
+    , IncomingMessage(AllMagnets, SingleMove, Unlock)
     , Magnet
     , Magnets
     , Model
@@ -30,6 +30,8 @@ type alias Magnet =
     , word : String
     , position : Position
     , rotation : Float
+    , -- Whether someone else is currently moving it.
+      locked : Bool
     }
 
 
@@ -63,18 +65,16 @@ type alias Model =
 type IncomingMessage
     = AllMagnets Magnets
     | SingleMove Move
+    | Unlock Id
 
 
 emptyModel : Model
 emptyModel =
     let
-        id =
-            "loading"
-
-        loadingMagnet =
-            Magnet id "Loading..." { x = 500, y = 500 } 10 False
+        magnet =
+            Magnet "0" "Loading..." { x = 500, y = 500 } 10 False
     in
-    { magnets = Dict.singleton id loadingMagnet
+    { magnets = Dict.singleton magnet.id magnet
     , dragData = Nothing
     , drag = Draggable.init
     }

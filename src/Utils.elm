@@ -1,10 +1,10 @@
 module Utils exposing
     ( applyDrag
+    , applyIncomingMove
     , height
     , relativeCenter
     , stopDrag
     , updateMagnet
-    , updateMagnetMove
     , width
     )
 
@@ -48,16 +48,15 @@ applyDrag maybeDrag ( dx, dy ) =
     case maybeDrag of
         Just ({ magnet, rotationFactor } as drag) ->
             let
-                -- horizontalGrab is negative when grabbing from the magnet's
+                -- rotationFactor is negative when grabbing from the magnet's
                 -- left, and positive when grabbing from the right. dy is
                 -- negative when grabbing upwards, and positive when grabbing
                 -- downwards.
-                rotation_ =
-                    magnet.rotation + rotationFactor * dy
-
-                -- Limit the rotation between -90 and 90.
-                rotation__ =
-                    max (min rotation_ 90) -90
+                rotation =
+                    (magnet.rotation + rotationFactor * dy)
+                        |> trimFloat
+                        -- Limit the rotation between -90 and 90.
+                        |> clamp -90 90
 
                 position =
                     magnet.position
@@ -69,7 +68,7 @@ applyDrag maybeDrag ( dx, dy ) =
                     }
 
                 magnet_ =
-                    { magnet | position = position_, rotation = rotation__ }
+                    { magnet | position = position_, rotation = rotation }
 
                 moveJson =
                     getMoveJson magnet_
@@ -85,8 +84,8 @@ applyDrag maybeDrag ( dx, dy ) =
 
 {-| Apply a move to a magnet in the dictionary.
 -}
-updateMagnetMove : Magnets -> Move -> Magnets
-updateMagnetMove magnets move =
+applyIncomingMove : Magnets -> Move -> Magnets
+applyIncomingMove magnets move =
     let
         position =
             Position move.x move.y
@@ -94,7 +93,7 @@ updateMagnetMove magnets move =
         applyMove maybeMagnet =
             case maybeMagnet of
                 Just magnet ->
-                    Just { magnet | position = position, rotation = move.rotation }
+                    Just { magnet | position = position, rotation = move.rotation, locked = True }
 
                 _ ->
                     Nothing
@@ -116,3 +115,8 @@ stopDrag ({ magnets, dragData } as model) =
                     magnets
     in
     { model | dragData = Nothing, magnets = magnets_ }
+
+
+trimFloat : Float -> Float
+trimFloat f =
+    toFloat (floor (f * 100)) / 100

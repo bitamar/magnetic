@@ -29,7 +29,7 @@ view { magnets, dragData } =
 
 
 viewMagnet : Magnet -> Html Msg
-viewMagnet ({ position, rotation, word } as magnet) =
+viewMagnet ({ position, rotation, word, locked } as magnet) =
     let
         px number =
             toString number ++ "px"
@@ -43,9 +43,13 @@ viewMagnet ({ position, rotation, word } as magnet) =
             , ( "transform", "rotate(" ++ toString rotation ++ "deg)" )
             ]
 
-        -- Using customerMouseTrigger, because I wasn't able to retrieve the
-        -- current mouse position through mouseTrigger.
-        dragStarter =
-            Draggable.customMouseTrigger (decodeMouseOffsetWithMagnet magnet) StartDragging
+        attr =
+            if not locked then
+                -- Using customerMouseTrigger, because I wasn't able to retrieve the
+                -- current mouse position through mouseTrigger.
+                Draggable.customMouseTrigger (decodeMouseOffsetWithMagnet magnet) StartDragging
+
+            else
+                class "locked"
     in
-    div [ dragStarter, style styles ] [ text word ]
+    div [ attr, style styles ] [ text word ]
