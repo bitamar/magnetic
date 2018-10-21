@@ -9145,13 +9145,6 @@ var _bitamar$magnetic$Json$getMoveJson = function (magnet) {
 		});
 	return A2(_elm_lang$core$Json_Encode$encode, 0, encodeMove);
 };
-var _bitamar$magnetic$Json$decodeMove = A5(
-	_elm_lang$core$Json_Decode$map4,
-	_bitamar$magnetic$Model$Move,
-	A2(_elm_lang$core$Json_Decode$field, 'i', _elm_lang$core$Json_Decode$string),
-	A2(_elm_lang$core$Json_Decode$field, 'x', _elm_lang$core$Json_Decode$int),
-	A2(_elm_lang$core$Json_Decode$field, 'y', _elm_lang$core$Json_Decode$int),
-	A2(_elm_lang$core$Json_Decode$field, 'r', _elm_lang$core$Json_Decode$float));
 var _bitamar$magnetic$Json$decodeMouseOffsetWithMagnet = function (magnet) {
 	var decodeOffset = A3(
 		_elm_lang$core$Json_Decode$map2,
@@ -9189,7 +9182,14 @@ var _bitamar$magnetic$Json$getMessage = function (string) {
 		_bitamar$magnetic$Model$Unlock,
 		A2(_elm_lang$core$Json_Decode$field, 'unlock', _elm_lang$core$Json_Decode$string));
 	var decodeAllMagnetsMessage = A2(_elm_lang$core$Json_Decode$map, _bitamar$magnetic$Model$AllMagnets, _bitamar$magnetic$Json$decodeMagnets);
-	var decodeSingleMoveMessage = A2(_elm_lang$core$Json_Decode$map, _bitamar$magnetic$Model$SingleMove, _bitamar$magnetic$Json$decodeMove);
+	var decodeMove = A5(
+		_elm_lang$core$Json_Decode$map4,
+		_bitamar$magnetic$Model$Move,
+		A2(_elm_lang$core$Json_Decode$field, 'i', _elm_lang$core$Json_Decode$string),
+		A2(_elm_lang$core$Json_Decode$field, 'x', _elm_lang$core$Json_Decode$int),
+		A2(_elm_lang$core$Json_Decode$field, 'y', _elm_lang$core$Json_Decode$int),
+		A2(_elm_lang$core$Json_Decode$field, 'r', _elm_lang$core$Json_Decode$float));
+	var decodeSingleMoveMessage = A2(_elm_lang$core$Json_Decode$map, _bitamar$magnetic$Model$SingleMove, decodeMove);
 	var decodeMessage = _elm_lang$core$Json_Decode$oneOf(
 		{
 			ctor: '::',
@@ -9258,98 +9258,354 @@ var _zaboco$elm_draggable$Draggable_Events$onDragStart = F2(
 				}
 			});
 	});
-var _bitamar$magnetic$Utils$trimFloat = function (f) {
-	return _elm_lang$core$Basics$toFloat(
-		_elm_lang$core$Basics$floor(f * 100)) / 100;
-};
-var _bitamar$magnetic$Utils$stopDrag = function (_p0) {
-	var _p1 = _p0;
-	var _p4 = _p1.magnets;
-	var magnets_ = function () {
-		var _p2 = _p1.dragData;
-		if (_p2.ctor === 'Just') {
-			var _p3 = _p2._0.magnet;
-			return A3(_elm_lang$core$Dict$insert, _p3.id, _p3, _p4);
-		} else {
-			return _p4;
-		}
-	}();
-	return _elm_lang$core$Native_Utils.update(
-		_p1,
-		{dragData: _elm_lang$core$Maybe$Nothing, magnets: magnets_});
-};
-var _bitamar$magnetic$Utils$applyIncomingMove = F2(
-	function (magnets, move) {
-		var position = A2(_bitamar$magnetic$Model$Position, move.x, move.y);
-		var applyMove = function (maybeMagnet) {
-			var _p5 = maybeMagnet;
-			if (_p5.ctor === 'Just') {
-				return _elm_lang$core$Maybe$Just(
-					_elm_lang$core$Native_Utils.update(
-						_p5._0,
-						{position: position, rotation: move.rotation, locked: true}));
-			} else {
-				return _elm_lang$core$Maybe$Nothing;
-			}
-		};
-		return A3(_elm_lang$core$Dict$update, move.id, applyMove, magnets);
+var _zaidan$elm_collision$Collision$cross2D = F2(
+	function (_p1, _p0) {
+		var _p2 = _p1;
+		var _p3 = _p0;
+		return (_p2._0 * _p3._1) - (_p2._1 * _p3._0);
 	});
-var _bitamar$magnetic$Utils$applyDrag = F2(
-	function (maybeDrag, _p6) {
-		var _p7 = _p6;
-		var _p10 = _p7._1;
-		var _p8 = maybeDrag;
-		if (_p8.ctor === 'Just') {
-			var _p9 = _p8._0.magnet;
-			var position = _p9.position;
-			var position_ = _elm_lang$core$Native_Utils.update(
-				position,
-				{
-					x: position.x + _elm_lang$core$Basics$floor(_p7._0),
-					y: position.y + _elm_lang$core$Basics$floor(_p10)
-				});
-			var rotation = A3(
-				_elm_lang$core$Basics$clamp,
-				-90,
-				90,
-				_bitamar$magnetic$Utils$trimFloat(_p9.rotation + (_p8._0.rotationFactor * _p10)));
-			var magnet_ = _elm_lang$core$Native_Utils.update(
-				_p9,
-				{position: position_, rotation: rotation});
-			var moveJson = _bitamar$magnetic$Json$getMoveJson(magnet_);
+var _zaidan$elm_collision$Collision$from = F2(
+	function (_p5, _p4) {
+		var _p6 = _p5;
+		var _p7 = _p4;
+		return {ctor: '_Tuple2', _0: _p7._0 - _p6._0, _1: _p7._1 - _p6._1};
+	});
+var _zaidan$elm_collision$Collision$neg = function (_p8) {
+	var _p9 = _p8;
+	return {ctor: '_Tuple2', _0: 0 - _p9._0, _1: 0 - _p9._1};
+};
+var _zaidan$elm_collision$Collision$mul = F2(
+	function (n, _p10) {
+		var _p11 = _p10;
+		return {ctor: '_Tuple2', _0: n * _p11._0, _1: n * _p11._1};
+	});
+var _zaidan$elm_collision$Collision$add = F2(
+	function (_p13, _p12) {
+		var _p14 = _p13;
+		var _p15 = _p12;
+		return {ctor: '_Tuple2', _0: _p15._0 + _p14._0, _1: _p15._1 + _p14._1};
+	});
+var _zaidan$elm_collision$Collision$sub = F2(
+	function (_p17, _p16) {
+		var _p18 = _p17;
+		var _p19 = _p16;
+		return {ctor: '_Tuple2', _0: _p19._0 - _p18._0, _1: _p19._1 - _p18._1};
+	});
+var _zaidan$elm_collision$Collision$calcMinkSupport = F3(
+	function (_p21, _p20, d) {
+		var _p22 = _p21;
+		var _p23 = _p20;
+		var maybep2 = A2(_p23._1, _p23._0, d);
+		var maybep1 = A2(
+			_p22._1,
+			_p22._0,
+			_zaidan$elm_collision$Collision$neg(d));
+		var _p24 = {ctor: '_Tuple2', _0: maybep1, _1: maybep2};
+		if (((_p24.ctor === '_Tuple2') && (_p24._0.ctor === 'Just')) && (_p24._1.ctor === 'Just')) {
 			return _elm_lang$core$Maybe$Just(
-				{
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						_p8._0,
-						{magnet: magnet_}),
-					_1: moveJson
-				});
+				A2(_zaidan$elm_collision$Collision$sub, _p24._0._0, _p24._1._0));
 		} else {
 			return _elm_lang$core$Maybe$Nothing;
 		}
 	});
-var _bitamar$magnetic$Utils$updateMagnet = F2(
-	function (magnets, magnet) {
-		return A3(
-			_elm_lang$core$Dict$update,
-			magnet.id,
-			function (_p11) {
-				return _elm_lang$core$Maybe$Just(magnet);
-			},
-			magnets);
+var _zaidan$elm_collision$Collision$dot = F2(
+	function (_p26, _p25) {
+		var _p27 = _p26;
+		var _p28 = _p25;
+		return (_p27._0 * _p28._0) + (_p27._1 * _p28._1);
 	});
-var _bitamar$magnetic$Utils$height = 30;
-var _bitamar$magnetic$Utils$width = function (_p12) {
-	var _p13 = _p12;
-	return (_elm_lang$core$String$length(_p13.word) * 9) + 12;
-};
-var _bitamar$magnetic$Utils$relativeCenter = function (magnet) {
-	return {
-		x: (_bitamar$magnetic$Utils$width(magnet) / 2) | 0,
-		y: (_bitamar$magnetic$Utils$height / 2) | 0
-	};
-};
+var _zaidan$elm_collision$Collision$trip = F3(
+	function (a, b, c) {
+		var cab = A2(
+			_zaidan$elm_collision$Collision$mul,
+			A2(_zaidan$elm_collision$Collision$dot, a, b),
+			c);
+		var bac = A2(
+			_zaidan$elm_collision$Collision$mul,
+			A2(_zaidan$elm_collision$Collision$dot, a, c),
+			b);
+		return A2(_zaidan$elm_collision$Collision$sub, cab, bac);
+	});
+var _zaidan$elm_collision$Collision$perp = F2(
+	function (a, b) {
+		return A3(_zaidan$elm_collision$Collision$trip, a, b, a);
+	});
+var _zaidan$elm_collision$Collision$getDirectionVector = F2(
+	function (_p30, _p29) {
+		var _p31 = _p30;
+		var _p34 = _p31._1;
+		var _p33 = _p31._0;
+		var _p32 = _p29;
+		var d = A3(
+			_zaidan$elm_collision$Collision$trip,
+			{ctor: '_Tuple2', _0: _p33, _1: _p34},
+			{ctor: '_Tuple2', _0: _p32._0, _1: _p32._1},
+			{ctor: '_Tuple2', _0: _p33, _1: _p34});
+		var collinear = _elm_lang$core$Native_Utils.eq(
+			d,
+			{ctor: '_Tuple2', _0: 0, _1: 0});
+		return collinear ? {ctor: '_Tuple2', _0: _p34, _1: 0 - _p33} : d;
+	});
+var _zaidan$elm_collision$Collision$isSameDirection = F2(
+	function (a, b) {
+		return _elm_lang$core$Native_Utils.cmp(
+			A2(_zaidan$elm_collision$Collision$dot, a, b),
+			0) > 0;
+	});
+var _zaidan$elm_collision$Collision$handle0Simplex = F2(
+	function (a, b) {
+		var a0 = _zaidan$elm_collision$Collision$neg(a);
+		var ab = A2(_zaidan$elm_collision$Collision$from, a, b);
+		var _p35 = A2(_zaidan$elm_collision$Collision$isSameDirection, ab, a0) ? {
+			ctor: '_Tuple2',
+			_0: {
+				ctor: '::',
+				_0: a,
+				_1: {
+					ctor: '::',
+					_0: b,
+					_1: {ctor: '[]'}
+				}
+			},
+			_1: A2(_zaidan$elm_collision$Collision$perp, ab, a0)
+		} : {
+			ctor: '_Tuple2',
+			_0: {
+				ctor: '::',
+				_0: a,
+				_1: {ctor: '[]'}
+			},
+			_1: a0
+		};
+		var newSim = _p35._0;
+		var newDir = _p35._1;
+		return {
+			ctor: '_Tuple2',
+			_0: false,
+			_1: {ctor: '_Tuple2', _0: newSim, _1: newDir}
+		};
+	});
+var _zaidan$elm_collision$Collision$handle1Simplex = F3(
+	function (a, b, c) {
+		var ac = A2(_zaidan$elm_collision$Collision$from, a, c);
+		var ab = A2(_zaidan$elm_collision$Collision$from, a, b);
+		var abp = A2(
+			_zaidan$elm_collision$Collision$perp,
+			ab,
+			_zaidan$elm_collision$Collision$neg(ac));
+		var acp = A2(
+			_zaidan$elm_collision$Collision$perp,
+			ac,
+			_zaidan$elm_collision$Collision$neg(ab));
+		var a0 = _zaidan$elm_collision$Collision$neg(a);
+		return A2(_zaidan$elm_collision$Collision$isSameDirection, abp, a0) ? (A2(_zaidan$elm_collision$Collision$isSameDirection, ab, a0) ? {
+			ctor: '_Tuple2',
+			_0: false,
+			_1: {
+				ctor: '_Tuple2',
+				_0: {
+					ctor: '::',
+					_0: a,
+					_1: {
+						ctor: '::',
+						_0: b,
+						_1: {ctor: '[]'}
+					}
+				},
+				_1: abp
+			}
+		} : {
+			ctor: '_Tuple2',
+			_0: false,
+			_1: {
+				ctor: '_Tuple2',
+				_0: {
+					ctor: '::',
+					_0: a,
+					_1: {ctor: '[]'}
+				},
+				_1: a0
+			}
+		}) : (A2(_zaidan$elm_collision$Collision$isSameDirection, acp, a0) ? (A2(_zaidan$elm_collision$Collision$isSameDirection, ac, a0) ? {
+			ctor: '_Tuple2',
+			_0: false,
+			_1: {
+				ctor: '_Tuple2',
+				_0: {
+					ctor: '::',
+					_0: a,
+					_1: {
+						ctor: '::',
+						_0: c,
+						_1: {ctor: '[]'}
+					}
+				},
+				_1: acp
+			}
+		} : {
+			ctor: '_Tuple2',
+			_0: false,
+			_1: {
+				ctor: '_Tuple2',
+				_0: {
+					ctor: '::',
+					_0: a,
+					_1: {ctor: '[]'}
+				},
+				_1: a0
+			}
+		}) : {
+			ctor: '_Tuple2',
+			_0: true,
+			_1: {
+				ctor: '_Tuple2',
+				_0: {
+					ctor: '::',
+					_0: b,
+					_1: {
+						ctor: '::',
+						_0: c,
+						_1: {ctor: '[]'}
+					}
+				},
+				_1: a0
+			}
+		});
+	});
+var _zaidan$elm_collision$Collision$enclosesOrigin = F2(
+	function (a, sim) {
+		var _p36 = sim;
+		_v17_2:
+		do {
+			if (_p36.ctor === '::') {
+				if (_p36._1.ctor === '[]') {
+					return A2(_zaidan$elm_collision$Collision$handle0Simplex, a, _p36._0);
+				} else {
+					if (_p36._1._1.ctor === '[]') {
+						return A3(_zaidan$elm_collision$Collision$handle1Simplex, a, _p36._0, _p36._1._0);
+					} else {
+						break _v17_2;
+					}
+				}
+			} else {
+				break _v17_2;
+			}
+		} while(false);
+		return {
+			ctor: '_Tuple2',
+			_0: false,
+			_1: {
+				ctor: '_Tuple2',
+				_0: sim,
+				_1: {ctor: '_Tuple2', _0: 0, _1: 0}
+			}
+		};
+	});
+var _zaidan$elm_collision$Collision$doSimplex2 = F6(
+	function (limit, depth, minkA, minkB, _p37, a) {
+		var _p38 = _p37;
+		var _p40 = _p38._0;
+		var _p39 = A2(_zaidan$elm_collision$Collision$enclosesOrigin, a, _p40);
+		var intersects = _p39._0;
+		var newSim = _p39._1._0;
+		var newDir = _p39._1._1;
+		var notPastOrig = _elm_lang$core$Native_Utils.cmp(
+			A2(_zaidan$elm_collision$Collision$dot, a, _p38._1),
+			0) < 0;
+		return notPastOrig ? _elm_lang$core$Maybe$Just(
+			{
+				ctor: '_Tuple2',
+				_0: false,
+				_1: {
+					ctor: '_Tuple2',
+					_0: {ctor: '[]'},
+					_1: {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Basics$toFloat(depth),
+						_1: _elm_lang$core$Basics$toFloat(depth)
+					}
+				}
+			}) : (intersects ? _elm_lang$core$Maybe$Just(
+			{
+				ctor: '_Tuple2',
+				_0: true,
+				_1: {ctor: '_Tuple2', _0: _p40, _1: a}
+			}) : ((_elm_lang$core$Native_Utils.cmp(depth, limit) > 0) ? _elm_lang$core$Maybe$Just(
+			{
+				ctor: '_Tuple2',
+				_0: false,
+				_1: {ctor: '_Tuple2', _0: newSim, _1: newDir}
+			}) : A5(
+			_zaidan$elm_collision$Collision$doSimplex,
+			limit,
+			depth + 1,
+			minkA,
+			minkB,
+			{ctor: '_Tuple2', _0: newSim, _1: newDir})));
+	});
+var _zaidan$elm_collision$Collision$doSimplex = F5(
+	function (limit, depth, minkA, minkB, _p41) {
+		var _p42 = _p41;
+		var _p44 = _p42._1;
+		var maybea = A3(_zaidan$elm_collision$Collision$calcMinkSupport, minkA, minkB, _p44);
+		var _p43 = maybea;
+		if (_p43.ctor === 'Just') {
+			return A6(
+				_zaidan$elm_collision$Collision$doSimplex2,
+				limit,
+				depth,
+				minkA,
+				minkB,
+				{ctor: '_Tuple2', _0: _p42._0, _1: _p44},
+				_p43._0);
+		} else {
+			return _elm_lang$core$Maybe$Nothing;
+		}
+	});
+var _zaidan$elm_collision$Collision$collision2 = F5(
+	function (limit, minkA, minkB, c, b) {
+		var c0 = _zaidan$elm_collision$Collision$neg(c);
+		var cb = A2(_zaidan$elm_collision$Collision$from, c, b);
+		var d = A2(_zaidan$elm_collision$Collision$getDirectionVector, cb, c0);
+		var simplexResult = A5(
+			_zaidan$elm_collision$Collision$doSimplex,
+			limit,
+			0,
+			minkA,
+			minkB,
+			{
+				ctor: '_Tuple2',
+				_0: {
+					ctor: '::',
+					_0: b,
+					_1: {
+						ctor: '::',
+						_0: c,
+						_1: {ctor: '[]'}
+					}
+				},
+				_1: d
+			});
+		var _p45 = simplexResult;
+		if ((_p45.ctor === 'Just') && (_p45._0.ctor === '_Tuple2')) {
+			return _elm_lang$core$Maybe$Just(_p45._0._0);
+		} else {
+			return _elm_lang$core$Maybe$Nothing;
+		}
+	});
+var _zaidan$elm_collision$Collision$collision = F3(
+	function (limit, minkA, minkB) {
+		var d1 = {ctor: '_Tuple2', _0: 1.0, _1: 0.0};
+		var d2 = _zaidan$elm_collision$Collision$neg(d1);
+		var maybeb = A3(_zaidan$elm_collision$Collision$calcMinkSupport, minkA, minkB, d2);
+		var maybec = A3(_zaidan$elm_collision$Collision$calcMinkSupport, minkA, minkB, d1);
+		var _p46 = {ctor: '_Tuple2', _0: maybec, _1: maybeb};
+		if (((_p46.ctor === '_Tuple2') && (_p46._0.ctor === 'Just')) && (_p46._1.ctor === 'Just')) {
+			return A5(_zaidan$elm_collision$Collision$collision2, limit, minkA, minkB, _p46._0._0, _p46._1._0);
+		} else {
+			return _elm_lang$core$Maybe$Nothing;
+		}
+	});
 var _elm_lang$websocket$Native_WebSocket = function() {
 
 function open(url, settings)
@@ -9882,6 +10138,184 @@ var _elm_lang$websocket$WebSocket$onSelfMsg = F3(
 		}
 	});
 _elm_lang$core$Native_Platform.effectManagers['WebSocket'] = {pkg: 'elm-lang/websocket', init: _elm_lang$websocket$WebSocket$init, onEffects: _elm_lang$websocket$WebSocket$onEffects, onSelfMsg: _elm_lang$websocket$WebSocket$onSelfMsg, tag: 'fx', cmdMap: _elm_lang$websocket$WebSocket$cmdMap, subMap: _elm_lang$websocket$WebSocket$subMap};
+var _bitamar$magnetic$Utils$dot = F2(
+	function (_p1, _p0) {
+		var _p2 = _p1;
+		var _p3 = _p0;
+		return (_p2._0 * _p3._0) + (_p2._1 * _p3._1);
+	});
+var _bitamar$magnetic$Utils$polySupport = F2(
+	function (list, d) {
+		var dotList = A2(
+			_elm_lang$core$List$map,
+			_bitamar$magnetic$Utils$dot(d),
+			list);
+		var decorated = A3(
+			_elm_lang$core$List$map2,
+			F2(
+				function (v0, v1) {
+					return {ctor: '_Tuple2', _0: v0, _1: v1};
+				}),
+			dotList,
+			list);
+		var max = _elm_lang$core$List$maximum(decorated);
+		var _p4 = max;
+		if ((_p4.ctor === 'Just') && (_p4._0.ctor === '_Tuple2')) {
+			return _elm_lang$core$Maybe$Just(_p4._0._1);
+		} else {
+			return _elm_lang$core$Maybe$Nothing;
+		}
+	});
+var _bitamar$magnetic$Utils$point = F5(
+	function (cx, cy, r, x, y) {
+		var theta = _elm_lang$core$Basics$degrees(r);
+		var cosT = function (n) {
+			return _elm_lang$core$Basics$cos(theta) * _elm_lang$core$Basics$toFloat(n);
+		};
+		var sinT = function (n) {
+			return _elm_lang$core$Basics$sin(theta) * _elm_lang$core$Basics$toFloat(n);
+		};
+		var rotatedX = cosT(x - cx) - sinT(y - cy);
+		var rotatedY = sinT(x - cx) + cosT(y - cy);
+		return {
+			ctor: '_Tuple2',
+			_0: _elm_lang$core$Basics$toFloat(cx) + rotatedX,
+			_1: _elm_lang$core$Basics$toFloat(cy) + rotatedY
+		};
+	});
+var _bitamar$magnetic$Utils$trimFloat = function (f) {
+	return _elm_lang$core$Basics$toFloat(
+		_elm_lang$core$Basics$floor(f * 100)) / 100;
+};
+var _bitamar$magnetic$Utils$stopDrag = function (_p5) {
+	var _p6 = _p5;
+	var _p9 = _p6.magnets;
+	var magnets_ = function () {
+		var _p7 = _p6.dragData;
+		if (_p7.ctor === 'Just') {
+			var _p8 = _p7._0.magnet;
+			return A3(_elm_lang$core$Dict$insert, _p8.id, _p8, _p9);
+		} else {
+			return _p9;
+		}
+	}();
+	return _elm_lang$core$Native_Utils.update(
+		_p6,
+		{dragData: _elm_lang$core$Maybe$Nothing, magnets: magnets_});
+};
+var _bitamar$magnetic$Utils$applyIncomingMove = F2(
+	function (magnets, move) {
+		var position = A2(_bitamar$magnetic$Model$Position, move.x, move.y);
+		var applyMove = function (maybeMagnet) {
+			var _p10 = maybeMagnet;
+			if (_p10.ctor === 'Just') {
+				return _elm_lang$core$Maybe$Just(
+					_elm_lang$core$Native_Utils.update(
+						_p10._0,
+						{position: position, rotation: move.rotation, locked: true}));
+			} else {
+				return _elm_lang$core$Maybe$Nothing;
+			}
+		};
+		return A3(_elm_lang$core$Dict$update, move.id, applyMove, magnets);
+	});
+var _bitamar$magnetic$Utils$updateMagnet = F2(
+	function (magnets, magnet) {
+		return A3(
+			_elm_lang$core$Dict$update,
+			magnet.id,
+			function (_p11) {
+				return _elm_lang$core$Maybe$Just(magnet);
+			},
+			magnets);
+	});
+var _bitamar$magnetic$Utils$height = 30;
+var _bitamar$magnetic$Utils$width = function (_p12) {
+	var _p13 = _p12;
+	return (_elm_lang$core$String$length(_p13.word) * 9) + 12;
+};
+var _bitamar$magnetic$Utils$relativeCenter = function (magnet) {
+	return {
+		x: (_bitamar$magnetic$Utils$width(magnet) / 2) | 0,
+		y: (_bitamar$magnetic$Utils$height / 2) | 0
+	};
+};
+var _bitamar$magnetic$Utils$getRectangleVertices = function (_p14) {
+	var _p15 = _p14;
+	var _p16 = _p15.position;
+	var halfH = (_bitamar$magnetic$Utils$height / 2) | 0;
+	var cy = _p16.y + halfH;
+	var halfW = (_bitamar$magnetic$Utils$width(_p15) / 2) | 0;
+	var cx = _p16.x + halfW;
+	var p = A3(_bitamar$magnetic$Utils$point, cx, cy, _p15.rotation);
+	return {
+		ctor: '::',
+		_0: A2(p, cx - halfW, cy - halfH),
+		_1: {
+			ctor: '::',
+			_0: A2(p, cx + halfW, cy - halfH),
+			_1: {
+				ctor: '::',
+				_0: A2(p, cx + halfW, cy + halfH),
+				_1: {
+					ctor: '::',
+					_0: A2(p, cx - halfW, cy + halfH),
+					_1: {ctor: '[]'}
+				}
+			}
+		}
+	};
+};
+var _bitamar$magnetic$Utils$colliding = F2(
+	function (magnet1, magnet2) {
+		var poly2 = _bitamar$magnetic$Utils$getRectangleVertices(magnet2);
+		var poly1 = _bitamar$magnetic$Utils$getRectangleVertices(magnet1);
+		return A2(
+			_elm_lang$core$Maybe$withDefault,
+			false,
+			A3(
+				_zaidan$elm_collision$Collision$collision,
+				0,
+				{ctor: '_Tuple2', _0: poly1, _1: _bitamar$magnetic$Utils$polySupport},
+				{ctor: '_Tuple2', _0: poly2, _1: _bitamar$magnetic$Utils$polySupport}));
+	});
+var _bitamar$magnetic$Utils$applyDrag = F3(
+	function (magnets, _p18, _p17) {
+		var _p19 = _p18;
+		var _p23 = _p19.magnet;
+		var _p22 = _p19;
+		var _p20 = _p17;
+		var _p21 = _p20._1;
+		var position = _p23.position;
+		var position_ = _elm_lang$core$Native_Utils.update(
+			position,
+			{
+				x: position.x + _elm_lang$core$Basics$floor(_p20._0),
+				y: position.y + _elm_lang$core$Basics$floor(_p21)
+			});
+		var rotation = A3(
+			_elm_lang$core$Basics$clamp,
+			-90,
+			90,
+			_bitamar$magnetic$Utils$trimFloat(_p23.rotation + (_p19.rotationFactor * _p21)));
+		var magnet_ = _elm_lang$core$Native_Utils.update(
+			_p23,
+			{position: position_, rotation: rotation});
+		var anyCollision = A2(
+			_elm_lang$core$List$any,
+			_bitamar$magnetic$Utils$colliding(magnet_),
+			_elm_lang$core$Dict$values(magnets));
+		return anyCollision ? {ctor: '_Tuple2', _0: _p22, _1: _elm_lang$core$Platform_Cmd$none} : {
+			ctor: '_Tuple2',
+			_0: _elm_lang$core$Native_Utils.update(
+				_p22,
+				{magnet: magnet_}),
+			_1: A2(
+				_elm_lang$websocket$WebSocket$send,
+				_bitamar$magnetic$Model$serverUrl,
+				_bitamar$magnetic$Json$getMoveJson(magnet_))
+		};
+	});
 var _bitamar$magnetic$Update$StartDragging = F2(
 	function (a, b) {
 		return {ctor: 'StartDragging', _0: a, _1: b};
@@ -9921,18 +10355,21 @@ var _bitamar$magnetic$Update$update = F2(
 					});
 				return A3(_zaboco$elm_draggable$Draggable$update, _bitamar$magnetic$Update$dragConfig, _p0._0, model__);
 			case 'OnDragBy':
-				var _p2 = A2(_bitamar$magnetic$Utils$applyDrag, model.dragData, _p0._0);
+				var _p2 = model.dragData;
 				if (_p2.ctor === 'Just') {
+					var _p3 = A3(_bitamar$magnetic$Utils$applyDrag, model.magnets, _p2._0, _p0._0);
+					var newDrag = _p3._0;
+					var cmd = _p3._1;
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
 						_elm_lang$core$Native_Utils.update(
 							model,
 							{
-								dragData: _elm_lang$core$Maybe$Just(_p2._0._0)
+								dragData: _elm_lang$core$Maybe$Just(newDrag)
 							}),
 						{
 							ctor: '::',
-							_0: A2(_elm_lang$websocket$WebSocket$send, _bitamar$magnetic$Model$serverUrl, _p2._0._1),
+							_0: cmd,
 							_1: {ctor: '[]'}
 						});
 				} else {
@@ -9942,19 +10379,19 @@ var _bitamar$magnetic$Update$update = F2(
 						{ctor: '[]'});
 				}
 			case 'IncomingMessage':
-				var _p3 = _bitamar$magnetic$Json$getMessage(_p0._0);
-				if (_p3.ctor === 'Ok') {
-					var _p4 = _p3._0;
-					switch (_p4.ctor) {
+				var _p4 = _bitamar$magnetic$Json$getMessage(_p0._0);
+				if (_p4.ctor === 'Ok') {
+					var _p5 = _p4._0;
+					switch (_p5.ctor) {
 						case 'AllMagnets':
 							return A2(
 								_elm_lang$core$Platform_Cmd_ops['!'],
 								_elm_lang$core$Native_Utils.update(
 									model,
-									{magnets: _p4._0}),
+									{magnets: _p5._0}),
 								{ctor: '[]'});
 						case 'SingleMove':
-							var magnets_ = A2(_bitamar$magnetic$Utils$applyIncomingMove, model.magnets, _p4._0);
+							var magnets_ = A2(_bitamar$magnetic$Utils$applyIncomingMove, model.magnets, _p5._0);
 							return A2(
 								_elm_lang$core$Platform_Cmd_ops['!'],
 								_elm_lang$core$Native_Utils.update(
@@ -9968,7 +10405,7 @@ var _bitamar$magnetic$Update$update = F2(
 										magnet,
 										{locked: false});
 								});
-							var magnets_ = A3(_elm_lang$core$Dict$update, _p4._0, unlock, model.magnets);
+							var magnets_ = A3(_elm_lang$core$Dict$update, _p5._0, unlock, model.magnets);
 							return A2(
 								_elm_lang$core$Platform_Cmd_ops['!'],
 								_elm_lang$core$Native_Utils.update(
@@ -9977,7 +10414,7 @@ var _bitamar$magnetic$Update$update = F2(
 								{ctor: '[]'});
 					}
 				} else {
-					var _p5 = A2(_elm_lang$core$Debug$log, 'error', _p3._0);
+					var _p6 = A2(_elm_lang$core$Debug$log, 'error', _p4._0);
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
 						model,
@@ -9996,15 +10433,15 @@ var _bitamar$magnetic$Update$DragMsg = function (a) {
 var _bitamar$magnetic$Update$IncomingMessage = function (a) {
 	return {ctor: 'IncomingMessage', _0: a};
 };
-var _bitamar$magnetic$Update$subscriptions = function (_p6) {
-	var _p7 = _p6;
+var _bitamar$magnetic$Update$subscriptions = function (_p7) {
+	var _p8 = _p7;
 	return _elm_lang$core$Platform_Sub$batch(
 		{
 			ctor: '::',
 			_0: A2(_elm_lang$websocket$WebSocket$listen, _bitamar$magnetic$Model$serverUrl, _bitamar$magnetic$Update$IncomingMessage),
 			_1: {
 				ctor: '::',
-				_0: A2(_zaboco$elm_draggable$Draggable$subscriptions, _bitamar$magnetic$Update$DragMsg, _p7.drag),
+				_0: A2(_zaboco$elm_draggable$Draggable$subscriptions, _bitamar$magnetic$Update$DragMsg, _p8.drag),
 				_1: {ctor: '[]'}
 			}
 		});
@@ -10358,48 +10795,103 @@ var _elm_lang$html$Html_Attributes$classList = function (list) {
 				A2(_elm_lang$core$List$filter, _elm_lang$core$Tuple$second, list))));
 };
 var _elm_lang$html$Html_Attributes$style = _elm_lang$virtual_dom$VirtualDom$style;
-var _bitamar$magnetic$View$viewMagnet = function (_p0) {
+var _bitamar$magnetic$View$px = function (number) {
+	return A2(
+		_elm_lang$core$Basics_ops['++'],
+		_elm_lang$core$Basics$toString(number),
+		'px');
+};
+var _bitamar$magnetic$View$viewPoint = function (_p0) {
 	var _p1 = _p0;
-	var _p3 = _p1.position;
-	var _p2 = _p1;
-	var attr = (!_p1.locked) ? A2(
+	return A2(
+		_elm_lang$html$Html$div,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$style(
+				{
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'left',
+						_1: _bitamar$magnetic$View$px(
+							_elm_lang$core$Basics$floor(_p1._0))
+					},
+					_1: {
+						ctor: '::',
+						_0: {
+							ctor: '_Tuple2',
+							_0: 'top',
+							_1: _bitamar$magnetic$View$px(
+								_elm_lang$core$Basics$floor(_p1._1))
+						},
+						_1: {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'width', _1: '1px'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'height', _1: '1px'},
+								_1: {
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'background-color', _1: 'red'},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'position', _1: 'absolute'},
+										_1: {ctor: '[]'}
+									}
+								}
+							}
+						}
+					}
+				}),
+			_1: {ctor: '[]'}
+		},
+		{ctor: '[]'});
+};
+var _bitamar$magnetic$View$viewVertices = function (magnet) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		A2(
+			_elm_lang$core$List$map,
+			_bitamar$magnetic$View$viewPoint,
+			_bitamar$magnetic$Utils$getRectangleVertices(magnet)));
+};
+var _bitamar$magnetic$View$viewMagnet = function (_p2) {
+	var _p3 = _p2;
+	var _p5 = _p3.position;
+	var _p4 = _p3;
+	var attr = (!_p3.locked) ? A2(
 		_zaboco$elm_draggable$Draggable$customMouseTrigger,
-		_bitamar$magnetic$Json$decodeMouseOffsetWithMagnet(_p2),
+		_bitamar$magnetic$Json$decodeMouseOffsetWithMagnet(_p4),
 		_bitamar$magnetic$Update$StartDragging) : _elm_lang$html$Html_Attributes$class('locked');
-	var px = function (number) {
-		return A2(
-			_elm_lang$core$Basics_ops['++'],
-			_elm_lang$core$Basics$toString(number),
-			'px');
-	};
 	var styles = {
 		ctor: '::',
 		_0: {
 			ctor: '_Tuple2',
 			_0: 'width',
-			_1: px(
-				_bitamar$magnetic$Utils$width(_p2))
+			_1: _bitamar$magnetic$View$px(
+				_bitamar$magnetic$Utils$width(_p4))
 		},
 		_1: {
 			ctor: '::',
 			_0: {
 				ctor: '_Tuple2',
 				_0: 'height',
-				_1: px(_bitamar$magnetic$Utils$height)
+				_1: _bitamar$magnetic$View$px(_bitamar$magnetic$Utils$height)
 			},
 			_1: {
 				ctor: '::',
 				_0: {
 					ctor: '_Tuple2',
 					_0: 'left',
-					_1: px(_p3.x)
+					_1: _bitamar$magnetic$View$px(_p5.x)
 				},
 				_1: {
 					ctor: '::',
 					_0: {
 						ctor: '_Tuple2',
 						_0: 'top',
-						_1: px(_p3.y)
+						_1: _bitamar$magnetic$View$px(_p5.y)
 					},
 					_1: {
 						ctor: '::',
@@ -10411,7 +10903,7 @@ var _bitamar$magnetic$View$viewMagnet = function (_p0) {
 								'rotate(',
 								A2(
 									_elm_lang$core$Basics_ops['++'],
-									_elm_lang$core$Basics$toString(_p1.rotation),
+									_elm_lang$core$Basics$toString(_p3.rotation),
 									'deg)'))
 						},
 						_1: {ctor: '[]'}
@@ -10420,6 +10912,7 @@ var _bitamar$magnetic$View$viewMagnet = function (_p0) {
 			}
 		}
 	};
+	var points = _bitamar$magnetic$Utils$getRectangleVertices(_p4);
 	return A2(
 		_elm_lang$html$Html$div,
 		{
@@ -10433,26 +10926,26 @@ var _bitamar$magnetic$View$viewMagnet = function (_p0) {
 		},
 		{
 			ctor: '::',
-			_0: _elm_lang$html$Html$text(_p1.word),
+			_0: _elm_lang$html$Html$text(_p3.word),
 			_1: {ctor: '[]'}
 		});
 };
-var _bitamar$magnetic$View$view = function (_p4) {
-	var _p5 = _p4;
-	var _p7 = _p5.magnets;
+var _bitamar$magnetic$View$view = function (_p6) {
+	var _p7 = _p6;
+	var _p9 = _p7.magnets;
 	var magnets_ = function () {
-		var _p6 = _p5.dragData;
-		if (_p6.ctor === 'Just') {
+		var _p8 = _p7.dragData;
+		if (_p8.ctor === 'Just') {
 			return A2(
 				_elm_lang$core$Basics_ops['++'],
-				_elm_lang$core$Dict$values(_p7),
+				_elm_lang$core$Dict$values(_p9),
 				{
 					ctor: '::',
-					_0: _p6._0.magnet,
+					_0: _p8._0.magnet,
 					_1: {ctor: '[]'}
 				});
 		} else {
-			return _elm_lang$core$Dict$values(_p7);
+			return _elm_lang$core$Dict$values(_p9);
 		}
 	}();
 	return A2(

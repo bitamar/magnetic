@@ -76,9 +76,13 @@ update msg model =
             Draggable.update dragConfig dragMsg model__
 
         OnDragBy delta ->
-            case applyDrag model.dragData delta of
-                Just ( newDrag, moveJson ) ->
-                    { model | dragData = Just newDrag } ! [ WebSocket.send serverUrl moveJson ]
+            case model.dragData of
+                Just drag ->
+                    let
+                        ( newDrag, cmd ) =
+                            applyDrag model.magnets drag delta
+                    in
+                    { model | dragData = Just newDrag } ! [ cmd ]
 
                 Nothing ->
                     model ! []

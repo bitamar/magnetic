@@ -34,6 +34,14 @@ decodeMagnets =
 getMessage : String -> Result String IncomingMessage
 getMessage string =
     let
+        decodeMove : Decoder Move
+        decodeMove =
+            Decode.map4 Move
+                (field "i" Decode.string)
+                (field "x" Decode.int)
+                (field "y" Decode.int)
+                (field "r" Decode.float)
+
         decodeMessage : Decoder IncomingMessage
         decodeMessage =
             Decode.oneOf
@@ -68,15 +76,6 @@ decodeMouseOffsetWithMagnet magnet =
     Decode.map2 (,)
         (Decode.succeed magnet)
         decodeOffset
-
-
-decodeMove : Decoder Move
-decodeMove =
-    Decode.map4 Move
-        (field "i" Decode.string)
-        (field "x" Decode.int)
-        (field "y" Decode.int)
-        (field "r" Decode.float)
 
 
 getMoveJson : Magnet -> String

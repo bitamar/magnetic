@@ -7,7 +7,7 @@ import Html.Attributes exposing (class, href, rel, style)
 import Json exposing (decodeMouseOffsetWithMagnet)
 import Model exposing (Magnet, Model)
 import Update exposing (Msg(StartDragging))
-import Utils exposing (height, width)
+import Utils exposing (getRectangleVertices, height, width)
 
 
 view : Model -> Html Msg
@@ -25,14 +25,16 @@ view { magnets, dragData } =
     div []
         [ node "link" [ rel "stylesheet", href "magnet.css" ] []
         , div [ class "magnets" ] (List.map viewMagnet magnets_)
+
+        --        , div [] (List.map viewVertices magnets_)
         ]
 
 
 viewMagnet : Magnet -> Html Msg
 viewMagnet ({ position, rotation, word, locked } as magnet) =
     let
-        px number =
-            toString number ++ "px"
+        points =
+            getRectangleVertices magnet
 
         styles =
             [ ( "width", px <| width magnet )
@@ -53,3 +55,28 @@ viewMagnet ({ position, rotation, word, locked } as magnet) =
                 class "locked"
     in
     div [ attr, style styles ] [ text word ]
+
+
+viewVertices : Magnet -> Html Msg
+viewVertices magnet =
+    div [] (List.map viewPoint <| getRectangleVertices magnet)
+
+
+viewPoint : ( Float, Float ) -> Html Msg
+viewPoint ( x, y ) =
+    div
+        [ style
+            [ ( "left", px <| floor x )
+            , ( "top", px <| floor y )
+            , ( "width", "1px" )
+            , ( "height", "1px" )
+            , ( "background-color", "red" )
+            , ( "position", "absolute" )
+            ]
+        ]
+        []
+
+
+px : Int -> String
+px number =
+    toString number ++ "px"

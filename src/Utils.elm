@@ -1,6 +1,7 @@
 module Utils exposing
     ( applyDrag
     , applyIncomingMove
+    , getRectangleVertices
     , height
     , relativeCenter
     , stopDrag
@@ -8,10 +9,12 @@ module Utils exposing
     , width
     )
 
-import Dict exposing (insert)
+import Collision exposing (Pt, collision)
+import Dict exposing (insert, values)
 import Draggable
 import Json exposing (getMoveJson)
-import Model exposing (Drag, Magnet, Magnets, Model, Move, Position)
+import Model exposing (Drag, Magnet, Magnets, Model, Move, Position, serverUrl)
+import WebSocket
 
 
 {-| Get the magnet width in pixels, according to the word length.
@@ -43,43 +46,55 @@ relativeCenter magnet =
 
 {-| Update the dragged magnet with the move delta, and produce the move json.
 -}
-applyDrag : Maybe Drag -> Draggable.Delta -> Maybe ( Drag, String )
-applyDrag maybeDrag ( dx, dy ) =
-    case maybeDrag of
-        Just ({ magnet, rotationFactor } as drag) ->
-            let
-                -- rotationFactor is negative when grabbing from the magnet's
-                -- left, and positive when grabbing from the right. dy is
-                -- negative when grabbing upwards, and positive when grabbing
-                -- downwards.
-                rotation =
-                    (magnet.rotation + rotationFactor * dy)
-                        |> trimFloat
-                        -- Limit the rotation between -90 and 90.
-                        |> clamp -90 90
+applyDrag : Magnets -> Drag -> Draggable.Delta -> ( Drag, Cmd msg )
+applyDrag magnets ({ magnet, rotationFactor } as drag) ( dx, dy ) =
+    let
+        -- rotationFactor is negative when grabbing from the magnet's
+        -- left, and positive when grabbing from the right. dy is
+        -- negative when grabbing upwards, and positive when grabbing
+        -- downwards.
+        rotation =
+            (magnet.rotation + rotationFactor * dy)
+                |> trimFloat
+                -- Limit the rotation between -90 and 90.
+                |> clamp -90 90
 
-                position =
-                    magnet.position
+        position =
+            magnet.position
 
-                position_ =
-                    { position
-                        | x = position.x + floor dx
-                        , y = position.y + floor dy
-                    }
+        position_ =
+            { position
+                | x = position.x + floor dx
+                , y = position.y + floor dy
+            }
 
-                magnet_ =
-                    { magnet | position = position_, rotation = rotation }
+        magnet_ =
+            { magnet | position = position_, rotation = rotation }
 
-                moveJson =
-                    getMoveJson magnet_
-            in
-            Just
-                ( { drag | magnet = magnet_ }
-                , moveJson
-                )
+        anyCollision =
+            List.any (colliding magnet_) (values magnets)
+    in
+    if anyCollision then
+        ( drag
+        , Cmd.none
+        )
 
-        _ ->
-            Nothing
+    else
+        ( { drag | magnet = magnet_ }
+        , WebSocket.send serverUrl (getMoveJson magnet_)
+        )
+
+
+colliding : Magnet -> Magnet -> Bool
+colliding magnet1 magnet2 =
+    let
+        poly1 =
+            getRectangleVertices magnet1
+
+        poly2 =
+            getRectangleVertices magnet2
+    in
+    Maybe.withDefault False <| collision 0 ( poly1, polySupport ) ( poly2, polySupport )
 
 
 {-| Apply a move to a magnet in the dictionary.
@@ -120,3 +135,74 @@ stopDrag ({ magnets, dragData } as model) =
 trimFloat : Float -> Float
 trimFloat f =
     toFloat (floor (f * 100)) / 100
+
+
+getRectangleVertices : Magnet -> List Pt
+getRectangleVertices ({ position, rotation } as magnet) =
+    let
+        halfW =
+            width magnet // 2
+
+        halfH =
+            height // 2
+
+        cx =
+            position.x + halfW
+
+        cy =
+            position.y + halfH
+
+        p =
+            point cx cy rotation
+    in
+    [ p (cx - halfW) (cy - halfH)
+    , p (cx + halfW) (cy - halfH)
+    , p (cx + halfW) (cy + halfH)
+    , p (cx - halfW) (cy + halfH)
+    ]
+
+
+point : Int -> Int -> Float -> Int -> Int -> Pt
+point cx cy r x y =
+    let
+        theta =
+            degrees r
+
+        cosT n =
+            cos theta * toFloat n
+
+        sinT n =
+            sin theta * toFloat n
+
+        rotatedX =
+            cosT (x - cx) - sinT (y - cy)
+
+        rotatedY =
+            sinT (x - cx) + cosT (y - cy)
+    in
+    ( toFloat cx + rotatedX, toFloat cy + rotatedY )
+
+
+dot : Pt -> Pt -> Float
+dot ( x1, y1 ) ( x2, y2 ) =
+    (x1 * x2) + (y1 * y2)
+
+
+polySupport : List Pt -> Pt -> Maybe Pt
+polySupport list d =
+    let
+        dotList =
+            List.map (dot d) list
+
+        decorated =
+            List.map2 (,) dotList list
+
+        max =
+            List.maximum decorated
+    in
+    case max of
+        Just ( _, p ) ->
+            Just p
+
+        _ ->
+            Nothing
