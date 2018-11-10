@@ -1,7 +1,7 @@
 module Model exposing
     ( Drag
     , Id
-    , IncomingMessage(AllMagnets, SingleMove, Unlock)
+    , IncomingMessage(..)
     , Magnet
     , Magnets
     , Model
@@ -59,11 +59,13 @@ type alias Model =
     { magnets : Magnets
     , dragData : Maybe Drag
     , drag : Draggable.State ()
+    , newMagnetText : String
     }
 
 
 type IncomingMessage
     = AllMagnets Magnets
+    | SingleMagnet Magnet
     | SingleMove Move
     | Unlock Id
 
@@ -77,6 +79,7 @@ emptyModel =
     { magnets = Dict.singleton magnet.id magnet
     , dragData = Nothing
     , drag = Draggable.init
+    , newMagnetText = ""
     }
 
 

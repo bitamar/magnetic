@@ -2,7 +2,8 @@ module Json exposing
     ( decodeMagnets
     , decodeMouseOffsetWithMagnet
     , getMessage
-    , getMoveJson
+    , moveJson
+    , newMagnetJson
     )
 
 import Json.Decode as Decode exposing (Decoder, decodeString, field)
@@ -10,29 +11,30 @@ import Json.Encode as Encode exposing (encode)
 import Model exposing (IncomingMessage(..), Magnet, Magnets, Move, Position)
 
 
-decodeMagnets : Decoder Magnets
-decodeMagnets =
+decodeMagnet : Decoder Magnet
+decodeMagnet =
     let
         decodePosition : Decoder Position
         decodePosition =
             Decode.map2 Position
                 (field "x" Decode.int)
                 (field "y" Decode.int)
-
-        decodeMagnet : Decoder Magnet
-        decodeMagnet =
-            Decode.map5 Magnet
-                (field "i" Decode.string)
-                (field "w" Decode.string)
-                decodePosition
-                (field "r" Decode.float)
-                (field "l" Decode.bool)
     in
+    Decode.map5 Magnet
+        (field "i" Decode.string)
+        (field "w" Decode.string)
+        decodePosition
+        (field "r" Decode.float)
+        (field "l" Decode.bool)
+
+
+decodeMagnets : Decoder Magnets
+decodeMagnets =
     Decode.dict decodeMagnet
 
 
 getMessage : String -> Result String IncomingMessage
-getMessage string =
+getMessage =
     let
         decodeMove : Decoder Move
         decodeMove =
@@ -42,13 +44,9 @@ getMessage string =
                 (field "y" Decode.int)
                 (field "r" Decode.float)
 
-        decodeMessage : Decoder IncomingMessage
-        decodeMessage =
-            Decode.oneOf
-                [ decodeSingleMoveMessage
-                , decodeAllMagnetsMessage
-                , decodeUnlockMessage
-                ]
+        decodeSingleMagnet : Decoder IncomingMessage
+        decodeSingleMagnet =
+            Decode.map SingleMagnet decodeMagnet
 
         decodeSingleMoveMessage : Decoder IncomingMessage
         decodeSingleMoveMessage =
@@ -62,7 +60,13 @@ getMessage string =
         decodeUnlockMessage =
             Decode.map Unlock (field "unlock" Decode.string)
     in
-    decodeString decodeMessage string
+    decodeString <|
+        Decode.oneOf
+            [ decodeSingleMagnet
+            , decodeSingleMoveMessage
+            , decodeAllMagnetsMessage
+            , decodeUnlockMessage
+            ]
 
 
 decodeMouseOffsetWithMagnet : Magnet -> Decoder ( Magnet, Position )
@@ -78,8 +82,8 @@ decodeMouseOffsetWithMagnet magnet =
         decodeOffset
 
 
-getMoveJson : Magnet -> String
-getMoveJson magnet =
+moveJson : Magnet -> String
+moveJson magnet =
     let
         encodeMove : Encode.Value
         encodeMove =
@@ -91,3 +95,8 @@ getMoveJson magnet =
                 ]
     in
     encode 0 encodeMove
+
+
+newMagnetJson : String -> String
+newMagnetJson word =
+    encode 0 <| Encode.object [ ( "add", Encode.string word ) ]

@@ -1,6 +1,7 @@
 module Utils exposing
     ( applyDrag
     , applyIncomingMove
+    , createMagnet
     , getRectangleVertices
     , height
     , relativeCenter
@@ -12,9 +13,22 @@ module Utils exposing
 import Collision exposing (Pt, collision)
 import Dict exposing (insert, values)
 import Draggable
-import Json exposing (getMoveJson)
+import Json exposing (moveJson, newMagnetJson)
 import Model exposing (Drag, Magnet, Magnets, Model, Move, Position, serverUrl)
 import WebSocket
+
+
+createMagnet : Model -> ( Model, Cmd msg )
+createMagnet model =
+    let
+        cmd =
+            if model.newMagnetText /= "" then
+                WebSocket.send serverUrl <| newMagnetJson model.newMagnetText
+
+            else
+                Cmd.none
+    in
+    { model | newMagnetText = "" } ! [ cmd ]
 
 
 {-| Get the magnet width in pixels, according to the word length.
@@ -81,7 +95,7 @@ applyDrag magnets ({ magnet, rotationFactor } as drag) ( dx, dy ) =
 
     else
         ( { drag | magnet = magnet_ }
-        , WebSocket.send serverUrl (getMoveJson magnet_)
+        , WebSocket.send serverUrl (moveJson magnet_)
         )
 
 

@@ -2,16 +2,17 @@ module View exposing (view)
 
 import Dict exposing (values)
 import Draggable
-import Html exposing (Html, div, node, text)
-import Html.Attributes exposing (class, href, rel, style)
+import Html exposing (Html, div, input, node, text)
+import Html.Attributes exposing (class, href, rel, style, value)
+import Html.Events exposing (onInput)
 import Json exposing (decodeMouseOffsetWithMagnet)
 import Model exposing (Magnet, Model)
-import Update exposing (Msg(StartDragging))
+import Update exposing (Msg(NewText, StartDragging))
 import Utils exposing (getRectangleVertices, height, width)
 
 
 view : Model -> Html Msg
-view { magnets, dragData } =
+view { magnets, dragData, newMagnetText } =
     let
         -- Append the dragged magnet to the list.
         magnets_ =
@@ -25,6 +26,7 @@ view { magnets, dragData } =
     div []
         [ node "link" [ rel "stylesheet", href "magnet.css" ] []
         , div [ class "magnets" ] (List.map viewMagnet magnets_)
+        , viewNewWordForm newMagnetText
 
         --        , div [] (List.map viewVertices magnets_)
         ]
@@ -33,9 +35,6 @@ view { magnets, dragData } =
 viewMagnet : Magnet -> Html Msg
 viewMagnet ({ position, rotation, word, locked } as magnet) =
     let
-        points =
-            getRectangleVertices magnet
-
         styles =
             [ ( "width", px <| width magnet )
             , ( "height", px height )
@@ -68,13 +67,37 @@ viewPoint ( x, y ) =
         [ style
             [ ( "left", px <| floor x )
             , ( "top", px <| floor y )
-            , ( "width", "1px" )
-            , ( "height", "1px" )
+            , ( "width", px 1 )
+            , ( "height", px 1 )
             , ( "background-color", "red" )
             , ( "position", "absolute" )
             ]
         ]
         []
+
+
+viewNewWordForm : String -> Html Msg
+viewNewWordForm newMagnetText =
+    div
+        [ style
+            [ ( "bottom", px 30 )
+            , ( "left", "calc(50% - 100px)" )
+            , ( "position", "fixed" )
+            , ( "width", px 100 )
+            , ( "height", px height )
+            ]
+        ]
+        [ input
+            [ onInput NewText
+            , class "box"
+            , style
+                [ ( "padding", "10px 20px" )
+                , ( "cursor", "text" )
+                ]
+            , value newMagnetText
+            ]
+            []
+        ]
 
 
 px : Int -> String

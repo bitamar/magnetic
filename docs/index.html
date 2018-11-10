@@ -9084,7 +9084,8 @@ var _bitamar$magnetic$Model$emptyModel = function () {
 	return {
 		magnets: A2(_elm_lang$core$Dict$singleton, magnet.id, magnet),
 		dragData: _elm_lang$core$Maybe$Nothing,
-		drag: _zaboco$elm_draggable$Draggable$init
+		drag: _zaboco$elm_draggable$Draggable$init,
+		newMagnetText: ''
 	};
 }();
 var _bitamar$magnetic$Model$Move = F4(
@@ -9095,9 +9096,9 @@ var _bitamar$magnetic$Model$Drag = F2(
 	function (a, b) {
 		return {magnet: a, rotationFactor: b};
 	});
-var _bitamar$magnetic$Model$Model = F3(
-	function (a, b, c) {
-		return {magnets: a, dragData: b, drag: c};
+var _bitamar$magnetic$Model$Model = F4(
+	function (a, b, c, d) {
+		return {magnets: a, dragData: b, drag: c, newMagnetText: d};
 	});
 var _bitamar$magnetic$Model$Unlock = function (a) {
 	return {ctor: 'Unlock', _0: a};
@@ -9105,10 +9106,28 @@ var _bitamar$magnetic$Model$Unlock = function (a) {
 var _bitamar$magnetic$Model$SingleMove = function (a) {
 	return {ctor: 'SingleMove', _0: a};
 };
+var _bitamar$magnetic$Model$SingleMagnet = function (a) {
+	return {ctor: 'SingleMagnet', _0: a};
+};
 var _bitamar$magnetic$Model$AllMagnets = function (a) {
 	return {ctor: 'AllMagnets', _0: a};
 };
-var _bitamar$magnetic$Json$getMoveJson = function (magnet) {
+var _bitamar$magnetic$Json$newMagnetJson = function (word) {
+	return A2(
+		_elm_lang$core$Json_Encode$encode,
+		0,
+		_elm_lang$core$Json_Encode$object(
+			{
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'add',
+					_1: _elm_lang$core$Json_Encode$string(word)
+				},
+				_1: {ctor: '[]'}
+			}));
+};
+var _bitamar$magnetic$Json$moveJson = function (magnet) {
 	var encodeMove = _elm_lang$core$Json_Encode$object(
 		{
 			ctor: '::',
@@ -9160,13 +9179,13 @@ var _bitamar$magnetic$Json$decodeMouseOffsetWithMagnet = function (magnet) {
 		_elm_lang$core$Json_Decode$succeed(magnet),
 		decodeOffset);
 };
-var _bitamar$magnetic$Json$decodeMagnets = function () {
+var _bitamar$magnetic$Json$decodeMagnet = function () {
 	var decodePosition = A3(
 		_elm_lang$core$Json_Decode$map2,
 		_bitamar$magnetic$Model$Position,
 		A2(_elm_lang$core$Json_Decode$field, 'x', _elm_lang$core$Json_Decode$int),
 		A2(_elm_lang$core$Json_Decode$field, 'y', _elm_lang$core$Json_Decode$int));
-	var decodeMagnet = A6(
+	return A6(
 		_elm_lang$core$Json_Decode$map5,
 		_bitamar$magnetic$Model$Magnet,
 		A2(_elm_lang$core$Json_Decode$field, 'i', _elm_lang$core$Json_Decode$string),
@@ -9174,14 +9193,15 @@ var _bitamar$magnetic$Json$decodeMagnets = function () {
 		decodePosition,
 		A2(_elm_lang$core$Json_Decode$field, 'r', _elm_lang$core$Json_Decode$float),
 		A2(_elm_lang$core$Json_Decode$field, 'l', _elm_lang$core$Json_Decode$bool));
-	return _elm_lang$core$Json_Decode$dict(decodeMagnet);
 }();
-var _bitamar$magnetic$Json$getMessage = function (string) {
+var _bitamar$magnetic$Json$decodeMagnets = _elm_lang$core$Json_Decode$dict(_bitamar$magnetic$Json$decodeMagnet);
+var _bitamar$magnetic$Json$getMessage = function () {
 	var decodeUnlockMessage = A2(
 		_elm_lang$core$Json_Decode$map,
 		_bitamar$magnetic$Model$Unlock,
 		A2(_elm_lang$core$Json_Decode$field, 'unlock', _elm_lang$core$Json_Decode$string));
 	var decodeAllMagnetsMessage = A2(_elm_lang$core$Json_Decode$map, _bitamar$magnetic$Model$AllMagnets, _bitamar$magnetic$Json$decodeMagnets);
+	var decodeSingleMagnet = A2(_elm_lang$core$Json_Decode$map, _bitamar$magnetic$Model$SingleMagnet, _bitamar$magnetic$Json$decodeMagnet);
 	var decodeMove = A5(
 		_elm_lang$core$Json_Decode$map4,
 		_bitamar$magnetic$Model$Move,
@@ -9190,22 +9210,26 @@ var _bitamar$magnetic$Json$getMessage = function (string) {
 		A2(_elm_lang$core$Json_Decode$field, 'y', _elm_lang$core$Json_Decode$int),
 		A2(_elm_lang$core$Json_Decode$field, 'r', _elm_lang$core$Json_Decode$float));
 	var decodeSingleMoveMessage = A2(_elm_lang$core$Json_Decode$map, _bitamar$magnetic$Model$SingleMove, decodeMove);
-	var decodeMessage = _elm_lang$core$Json_Decode$oneOf(
-		{
-			ctor: '::',
-			_0: decodeSingleMoveMessage,
-			_1: {
+	return _elm_lang$core$Json_Decode$decodeString(
+		_elm_lang$core$Json_Decode$oneOf(
+			{
 				ctor: '::',
-				_0: decodeAllMagnetsMessage,
+				_0: decodeSingleMagnet,
 				_1: {
 					ctor: '::',
-					_0: decodeUnlockMessage,
-					_1: {ctor: '[]'}
+					_0: decodeSingleMoveMessage,
+					_1: {
+						ctor: '::',
+						_0: decodeAllMagnetsMessage,
+						_1: {
+							ctor: '::',
+							_0: decodeUnlockMessage,
+							_1: {ctor: '[]'}
+						}
+					}
 				}
-			}
-		});
-	return A2(_elm_lang$core$Json_Decode$decodeString, decodeMessage, string);
-};
+			}));
+}();
 var _zaboco$elm_draggable$Draggable_Events$onMouseDown = F2(
 	function (toMsg, config) {
 		return _elm_lang$core$Native_Utils.update(
@@ -9258,6 +9282,174 @@ var _zaboco$elm_draggable$Draggable_Events$onDragStart = F2(
 				}
 			});
 	});
+var _elm_lang$keyboard$Keyboard$onSelfMsg = F3(
+	function (router, _p0, state) {
+		var _p1 = _p0;
+		var _p2 = A2(_elm_lang$core$Dict$get, _p1.category, state);
+		if (_p2.ctor === 'Nothing') {
+			return _elm_lang$core$Task$succeed(state);
+		} else {
+			var send = function (tagger) {
+				return A2(
+					_elm_lang$core$Platform$sendToApp,
+					router,
+					tagger(_p1.keyCode));
+			};
+			return A2(
+				_elm_lang$core$Task$andThen,
+				function (_p3) {
+					return _elm_lang$core$Task$succeed(state);
+				},
+				_elm_lang$core$Task$sequence(
+					A2(_elm_lang$core$List$map, send, _p2._0.taggers)));
+		}
+	});
+var _elm_lang$keyboard$Keyboard_ops = _elm_lang$keyboard$Keyboard_ops || {};
+_elm_lang$keyboard$Keyboard_ops['&>'] = F2(
+	function (task1, task2) {
+		return A2(
+			_elm_lang$core$Task$andThen,
+			function (_p4) {
+				return task2;
+			},
+			task1);
+	});
+var _elm_lang$keyboard$Keyboard$init = _elm_lang$core$Task$succeed(_elm_lang$core$Dict$empty);
+var _elm_lang$keyboard$Keyboard$categorizeHelpHelp = F2(
+	function (value, maybeValues) {
+		var _p5 = maybeValues;
+		if (_p5.ctor === 'Nothing') {
+			return _elm_lang$core$Maybe$Just(
+				{
+					ctor: '::',
+					_0: value,
+					_1: {ctor: '[]'}
+				});
+		} else {
+			return _elm_lang$core$Maybe$Just(
+				{ctor: '::', _0: value, _1: _p5._0});
+		}
+	});
+var _elm_lang$keyboard$Keyboard$categorizeHelp = F2(
+	function (subs, subDict) {
+		categorizeHelp:
+		while (true) {
+			var _p6 = subs;
+			if (_p6.ctor === '[]') {
+				return subDict;
+			} else {
+				var _v4 = _p6._1,
+					_v5 = A3(
+					_elm_lang$core$Dict$update,
+					_p6._0._0,
+					_elm_lang$keyboard$Keyboard$categorizeHelpHelp(_p6._0._1),
+					subDict);
+				subs = _v4;
+				subDict = _v5;
+				continue categorizeHelp;
+			}
+		}
+	});
+var _elm_lang$keyboard$Keyboard$categorize = function (subs) {
+	return A2(_elm_lang$keyboard$Keyboard$categorizeHelp, subs, _elm_lang$core$Dict$empty);
+};
+var _elm_lang$keyboard$Keyboard$keyCode = A2(_elm_lang$core$Json_Decode$field, 'keyCode', _elm_lang$core$Json_Decode$int);
+var _elm_lang$keyboard$Keyboard$subscription = _elm_lang$core$Native_Platform.leaf('Keyboard');
+var _elm_lang$keyboard$Keyboard$Watcher = F2(
+	function (a, b) {
+		return {taggers: a, pid: b};
+	});
+var _elm_lang$keyboard$Keyboard$Msg = F2(
+	function (a, b) {
+		return {category: a, keyCode: b};
+	});
+var _elm_lang$keyboard$Keyboard$onEffects = F3(
+	function (router, newSubs, oldState) {
+		var rightStep = F3(
+			function (category, taggers, task) {
+				return A2(
+					_elm_lang$core$Task$andThen,
+					function (state) {
+						return A2(
+							_elm_lang$core$Task$andThen,
+							function (pid) {
+								return _elm_lang$core$Task$succeed(
+									A3(
+										_elm_lang$core$Dict$insert,
+										category,
+										A2(_elm_lang$keyboard$Keyboard$Watcher, taggers, pid),
+										state));
+							},
+							_elm_lang$core$Process$spawn(
+								A3(
+									_elm_lang$dom$Dom_LowLevel$onDocument,
+									category,
+									_elm_lang$keyboard$Keyboard$keyCode,
+									function (_p7) {
+										return A2(
+											_elm_lang$core$Platform$sendToSelf,
+											router,
+											A2(_elm_lang$keyboard$Keyboard$Msg, category, _p7));
+									})));
+					},
+					task);
+			});
+		var bothStep = F4(
+			function (category, _p8, taggers, task) {
+				var _p9 = _p8;
+				return A2(
+					_elm_lang$core$Task$map,
+					A2(
+						_elm_lang$core$Dict$insert,
+						category,
+						A2(_elm_lang$keyboard$Keyboard$Watcher, taggers, _p9.pid)),
+					task);
+			});
+		var leftStep = F3(
+			function (category, _p10, task) {
+				var _p11 = _p10;
+				return A2(
+					_elm_lang$keyboard$Keyboard_ops['&>'],
+					_elm_lang$core$Process$kill(_p11.pid),
+					task);
+			});
+		return A6(
+			_elm_lang$core$Dict$merge,
+			leftStep,
+			bothStep,
+			rightStep,
+			oldState,
+			_elm_lang$keyboard$Keyboard$categorize(newSubs),
+			_elm_lang$core$Task$succeed(_elm_lang$core$Dict$empty));
+	});
+var _elm_lang$keyboard$Keyboard$MySub = F2(
+	function (a, b) {
+		return {ctor: 'MySub', _0: a, _1: b};
+	});
+var _elm_lang$keyboard$Keyboard$presses = function (tagger) {
+	return _elm_lang$keyboard$Keyboard$subscription(
+		A2(_elm_lang$keyboard$Keyboard$MySub, 'keypress', tagger));
+};
+var _elm_lang$keyboard$Keyboard$downs = function (tagger) {
+	return _elm_lang$keyboard$Keyboard$subscription(
+		A2(_elm_lang$keyboard$Keyboard$MySub, 'keydown', tagger));
+};
+var _elm_lang$keyboard$Keyboard$ups = function (tagger) {
+	return _elm_lang$keyboard$Keyboard$subscription(
+		A2(_elm_lang$keyboard$Keyboard$MySub, 'keyup', tagger));
+};
+var _elm_lang$keyboard$Keyboard$subMap = F2(
+	function (func, _p12) {
+		var _p13 = _p12;
+		return A2(
+			_elm_lang$keyboard$Keyboard$MySub,
+			_p13._0,
+			function (_p14) {
+				return func(
+					_p13._1(_p14));
+			});
+	});
+_elm_lang$core$Native_Platform.effectManagers['Keyboard'] = {pkg: 'elm-lang/keyboard', init: _elm_lang$keyboard$Keyboard$init, onEffects: _elm_lang$keyboard$Keyboard$onEffects, onSelfMsg: _elm_lang$keyboard$Keyboard$onSelfMsg, tag: 'sub', subMap: _elm_lang$keyboard$Keyboard$subMap};
 var _zaidan$elm_collision$Collision$cross2D = F2(
 	function (_p1, _p0) {
 		var _p2 = _p1;
@@ -10313,9 +10505,25 @@ var _bitamar$magnetic$Utils$applyDrag = F3(
 			_1: A2(
 				_elm_lang$websocket$WebSocket$send,
 				_bitamar$magnetic$Model$serverUrl,
-				_bitamar$magnetic$Json$getMoveJson(magnet_))
+				_bitamar$magnetic$Json$moveJson(magnet_))
 		};
 	});
+var _bitamar$magnetic$Utils$createMagnet = function (model) {
+	var cmd = (!_elm_lang$core$Native_Utils.eq(model.newMagnetText, '')) ? A2(
+		_elm_lang$websocket$WebSocket$send,
+		_bitamar$magnetic$Model$serverUrl,
+		_bitamar$magnetic$Json$newMagnetJson(model.newMagnetText)) : _elm_lang$core$Platform_Cmd$none;
+	return A2(
+		_elm_lang$core$Platform_Cmd_ops['!'],
+		_elm_lang$core$Native_Utils.update(
+			model,
+			{newMagnetText: ''}),
+		{
+			ctor: '::',
+			_0: cmd,
+			_1: {ctor: '[]'}
+		});
+};
 var _bitamar$magnetic$Update$StartDragging = F2(
 	function (a, b) {
 		return {ctor: 'StartDragging', _0: a, _1: b};
@@ -10390,6 +10598,15 @@ var _bitamar$magnetic$Update$update = F2(
 									model,
 									{magnets: _p5._0}),
 								{ctor: '[]'});
+						case 'SingleMagnet':
+							return A2(
+								_elm_lang$core$Platform_Cmd_ops['!'],
+								_elm_lang$core$Native_Utils.update(
+									model,
+									{
+										magnets: A2(_bitamar$magnetic$Utils$updateMagnet, model.magnets, _p5._0)
+									}),
+								{ctor: '[]'});
 						case 'SingleMove':
 							var magnets_ = A2(_bitamar$magnetic$Utils$applyIncomingMove, model.magnets, _p5._0);
 							return A2(
@@ -10420,6 +10637,18 @@ var _bitamar$magnetic$Update$update = F2(
 						model,
 						{ctor: '[]'});
 				}
+			case 'KeyMsg':
+				return _elm_lang$core$Native_Utils.eq(_p0._0, 13) ? _bitamar$magnetic$Utils$createMagnet(model) : A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					model,
+					{ctor: '[]'});
+			case 'NewText':
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{newMagnetText: _p0._0}),
+					{ctor: '[]'});
 			default:
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
@@ -10427,11 +10656,17 @@ var _bitamar$magnetic$Update$update = F2(
 					{ctor: '[]'});
 		}
 	});
-var _bitamar$magnetic$Update$DragMsg = function (a) {
-	return {ctor: 'DragMsg', _0: a};
+var _bitamar$magnetic$Update$NewText = function (a) {
+	return {ctor: 'NewText', _0: a};
+};
+var _bitamar$magnetic$Update$KeyMsg = function (a) {
+	return {ctor: 'KeyMsg', _0: a};
 };
 var _bitamar$magnetic$Update$IncomingMessage = function (a) {
 	return {ctor: 'IncomingMessage', _0: a};
+};
+var _bitamar$magnetic$Update$DragMsg = function (a) {
+	return {ctor: 'DragMsg', _0: a};
 };
 var _bitamar$magnetic$Update$subscriptions = function (_p7) {
 	var _p8 = _p7;
@@ -10442,7 +10677,11 @@ var _bitamar$magnetic$Update$subscriptions = function (_p7) {
 			_1: {
 				ctor: '::',
 				_0: A2(_zaboco$elm_draggable$Draggable$subscriptions, _bitamar$magnetic$Update$DragMsg, _p8.drag),
-				_1: {ctor: '[]'}
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$keyboard$Keyboard$presses(_bitamar$magnetic$Update$KeyMsg),
+					_1: {ctor: '[]'}
+				}
 			}
 		});
 };
@@ -10801,6 +11040,81 @@ var _bitamar$magnetic$View$px = function (number) {
 		_elm_lang$core$Basics$toString(number),
 		'px');
 };
+var _bitamar$magnetic$View$viewNewWordForm = function (newMagnetText) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$style(
+				{
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'bottom',
+						_1: _bitamar$magnetic$View$px(30)
+					},
+					_1: {
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'left', _1: 'calc(50% - 100px)'},
+						_1: {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'position', _1: 'fixed'},
+							_1: {
+								ctor: '::',
+								_0: {
+									ctor: '_Tuple2',
+									_0: 'width',
+									_1: _bitamar$magnetic$View$px(100)
+								},
+								_1: {
+									ctor: '::',
+									_0: {
+										ctor: '_Tuple2',
+										_0: 'height',
+										_1: _bitamar$magnetic$View$px(_bitamar$magnetic$Utils$height)
+									},
+									_1: {ctor: '[]'}
+								}
+							}
+						}
+					}
+				}),
+			_1: {ctor: '[]'}
+		},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$input,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Events$onInput(_bitamar$magnetic$Update$NewText),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$class('box'),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$style(
+								{
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'padding', _1: '10px 20px'},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'cursor', _1: 'text'},
+										_1: {ctor: '[]'}
+									}
+								}),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$value(newMagnetText),
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				},
+				{ctor: '[]'}),
+			_1: {ctor: '[]'}
+		});
+};
 var _bitamar$magnetic$View$viewPoint = function (_p0) {
 	var _p1 = _p0;
 	return A2(
@@ -10826,10 +11140,18 @@ var _bitamar$magnetic$View$viewPoint = function (_p0) {
 						},
 						_1: {
 							ctor: '::',
-							_0: {ctor: '_Tuple2', _0: 'width', _1: '1px'},
+							_0: {
+								ctor: '_Tuple2',
+								_0: 'width',
+								_1: _bitamar$magnetic$View$px(1)
+							},
 							_1: {
 								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'height', _1: '1px'},
+								_0: {
+									ctor: '_Tuple2',
+									_0: 'height',
+									_1: _bitamar$magnetic$View$px(1)
+								},
 								_1: {
 									ctor: '::',
 									_0: {ctor: '_Tuple2', _0: 'background-color', _1: 'red'},
@@ -10912,7 +11234,6 @@ var _bitamar$magnetic$View$viewMagnet = function (_p2) {
 			}
 		}
 	};
-	var points = _bitamar$magnetic$Utils$getRectangleVertices(_p4);
 	return A2(
 		_elm_lang$html$Html$div,
 		{
@@ -10976,7 +11297,11 @@ var _bitamar$magnetic$View$view = function (_p6) {
 						_1: {ctor: '[]'}
 					},
 					A2(_elm_lang$core$List$map, _bitamar$magnetic$View$viewMagnet, magnets_)),
-				_1: {ctor: '[]'}
+				_1: {
+					ctor: '::',
+					_0: _bitamar$magnetic$View$viewNewWordForm(_p7.newMagnetText),
+					_1: {ctor: '[]'}
+				}
 			}
 		});
 };

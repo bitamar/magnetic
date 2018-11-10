@@ -4,28 +4,25 @@ import Dict exposing (remove)
 import Draggable
 import Draggable.Events exposing (onDragBy, onDragEnd)
 import Json exposing (getMessage)
-import Model
-    exposing
-        ( Drag
-        , IncomingMessage(AllMagnets, SingleMove, Unlock)
-        , Magnet
-        , Model
-        , Position
-        , serverUrl
-        )
+import Keyboard
+import Model exposing (Drag, IncomingMessage(..), Magnet, Model, Position, serverUrl)
 import Utils
     exposing
         ( applyDrag
         , applyIncomingMove
+        , createMagnet
         , relativeCenter
         , stopDrag
+        , updateMagnet
         )
 import WebSocket
 
 
 type Msg
-    = IncomingMessage String
-    | DragMsg (Draggable.Msg ())
+    = DragMsg (Draggable.Msg ())
+    | IncomingMessage String
+    | KeyMsg Keyboard.KeyCode
+    | NewText String
     | OnDragBy Draggable.Delta
     | StopDragging
     | StartDragging (Draggable.Msg ()) ( Magnet, Position )
@@ -91,8 +88,11 @@ update msg model =
             case getMessage string of
                 Ok message ->
                     case message of
-                        AllMagnets magnets_ ->
-                            { model | magnets = magnets_ } ! []
+                        AllMagnets magnets ->
+                            { model | magnets = magnets } ! []
+
+                        SingleMagnet magnet ->
+                            { model | magnets = updateMagnet model.magnets magnet } ! []
 
                         SingleMove move ->
                             let
@@ -118,6 +118,16 @@ update msg model =
                     in
                     model ! []
 
+        KeyMsg code ->
+            if code == 13 then
+                createMagnet model
+
+            else
+                model ! []
+
+        NewText text ->
+            { model | newMagnetText = text } ! []
+
         StopDragging ->
             stopDrag model ! []
 
@@ -131,4 +141,5 @@ subscriptions { drag } =
     Sub.batch
         [ WebSocket.listen serverUrl IncomingMessage
         , Draggable.subscriptions DragMsg drag
+        , Keyboard.presses KeyMsg
         ]
